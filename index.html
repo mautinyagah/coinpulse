@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#090817">
-<title>CoinPulse — Crypto Market Intelligence & Trading Platform</title>
-<meta name="description" content="Track cryptocurrency prices, explore market movements, view interactive charts, simulate trades and manage your crypto portfolio with CoinPulse.">
+<title>CoinPulse — Crypto Market Intelligence & Pro Trading Platform</title>
+<meta name="description" content="Track cryptocurrency prices, explore market movements, view interactive charts, simulate trades, monitor P&L and manage your crypto portfolio with CoinPulse.">
 
 <link rel="preconnect" href="https://api.coingecko.com">
 <link rel="preconnect" href="https://unpkg.com">
@@ -173,7 +173,7 @@ tbody tr:hover{background:#ffffff06}
 @keyframes loading{from{transform:translateX(-120%)}to{transform:translateX(350%)}}
 .notice{padding:12px 14px;border:1px solid #8b5cf63a;background:#8b5cf610;color:#bcb4ff;border-radius:12px;font-size:12px;line-height:1.6;margin:15px 0}
 .error-notice{border-color:#ff648750;background:#ff64870d;color:#ff9bb0}
-.portfolio-form{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin:18px 0}
+.portfolio-form{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;margin:18px 0}
 .field{display:flex;flex-direction:column;gap:7px;min-width:0}
 .field label{font-size:11px;color:var(--muted)}
 .field input,.field select,.modal-input{
@@ -196,7 +196,7 @@ tbody tr:hover{background:#ffffff06}
 .footer-links a:hover{color:#fff;text-decoration:underline}
 .mobile-nav{display:none}
 
-/* Floating AI Assistant */
+/* Floating AI Assistant & Notifications */
 .ai-fab{
   position:fixed;bottom:25px;right:25px;z-index:40;width:56px;height:56px;border-radius:50%;
   background:linear-gradient(135deg,var(--purple),var(--blue));border:0;color:#fff;font-size:24px;
@@ -217,9 +217,9 @@ tbody tr:hover{background:#ffffff06}
 .ai-footer{padding:12px;border-top:1px solid var(--line);display:flex;gap:8px;background:#0c0b1d}
 .ai-footer input{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:#111027;color:var(--text);font-size:13px}
 
-/* Trading & Wallet UI */
-.trade-box{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:15px 0}
-@media(max-width:700px){.trade-box{grid-template-columns:1fr}}
+/* Notification Badge */
+.notif-btn{position:relative;background:var(--panel2);border:1px solid var(--line);padding:8px 12px;border-radius:12px;color:var(--text);font-size:16px}
+.notif-badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;display:grid;place-items:center}
 
 .modal-backdrop{
   display:none;position:fixed;inset:0;z-index:50;background:#05040de8;
@@ -293,11 +293,6 @@ tbody tr:hover{background:#ffffff06}
   .table-toolbar{padding:12px}
   th,td{padding:13px 12px}
 }
-@media(max-width:380px){
-  .top-actions .btn{padding:8px}
-  .brand{font-size:17px}
-  .coin-price{font-size:15px}
-}
 </style>
 </head>
 
@@ -310,8 +305,9 @@ tbody tr:hover{background:#ffffff06}
     </a>
     <div class="top-actions">
       <div class="status"><span class="dot" id="statusDot"></span><span id="connectionStatus">Connecting to market...</span></div>
+      <button class="notif-btn" onclick="openNotificationsModal()" title="Notifications">🔔<span class="notif-badge" id="notifCount">2</span></button>
       <button class="btn small" id="refreshButton" onclick="loadMarkets(true)">↻ Refresh</button>
-      <button class="btn primary small" onclick="openAccountModal()">Sign in / Sign up</button>
+      <button class="btn primary small" onclick="openAccountModal()">Sign in</button>
     </div>
   </header>
 
@@ -321,7 +317,8 @@ tbody tr:hover{background:#ffffff06}
       <button class="nav-btn active" data-page="home" onclick="navigate('home')"><span class="nav-icon">⌂</span>Home</button>
       <button class="nav-btn" data-page="markets" onclick="navigate('markets')"><span class="nav-icon">◈</span>Markets</button>
       <button class="nav-btn" data-page="trade" onclick="navigate('trade')"><span class="nav-icon">⚡</span>Trade & Demo</button>
-      <button class="nav-btn" data-page="assets" onclick="navigate('assets')"><span class="nav-icon">▤</span>Portfolio</button>
+      <button class="nav-btn" data-page="assets" onclick="navigate('assets')"><span class="nav-icon">▤</span>Portfolio & P&L</button>
+      <button class="nav-btn" data-page="leaderboard" onclick="navigate('leaderboard')"><span class="nav-icon">🏆</span>Leaderboard</button>
       <button class="nav-btn" data-page="referral" onclick="navigate('referral')"><span class="nav-icon">🎁</span>Referral</button>
       <button class="nav-btn" data-page="support" onclick="navigate('support')"><span class="nav-icon">✉</span>Support</button>
       <button class="nav-btn" data-page="profile" onclick="navigate('profile')"><span class="nav-icon">◎</span>Profile</button>
@@ -343,7 +340,7 @@ tbody tr:hover{background:#ffffff06}
           <div class="hero-content">
             <div class="eyebrow">Your crypto, in focus</div>
             <h1>See the market.<br><span class="gradient-text">Find your next move.</span></h1>
-            <p class="sub">Explore live cryptocurrency prices, follow market movements, simulate demo trades, and track your holdings from one clear dashboard.</p>
+            <p class="sub">Explore live cryptocurrency prices, follow market movements, simulate demo trades, track cost basis P&L, and convert tokens instantly.</p>
             <div class="hero-actions">
               <button class="btn primary" onclick="navigate('markets')">Explore markets ↗</button>
               <button class="btn" onclick="navigate('trade')">Try demo trading</button>
@@ -374,6 +371,18 @@ tbody tr:hover{background:#ffffff06}
           </div>
         </div>
 
+        <!-- Quick Converter Widget -->
+        <div class="card" style="padding:22px;margin-bottom:30px">
+          <h2>⚡ Instant Crypto Converter</h2>
+          <p class="sub">Quickly calculate valuations based on live market prices.</p>
+          <div style="display:grid;grid-template-columns:1fr auto 1fr auto;gap:10px;align-items:center;margin-top:15px">
+            <div class="field"><label>Amount</label><input type="number" id="convertAmount" value="1" min="0.0001" step="any" oninput="calculateConversion()"></div>
+            <div class="field"><label>From</label><select id="convertFrom" onchange="calculateConversion()"><option value="btc">Bitcoin (BTC)</option><option value="eth">Ethereum (ETH)</option><option value="usdt">Tether (USDT)</option></select></div>
+            <div style="text-align:center;font-size:20px;padding-top:18px">⇄</div>
+            <div class="field"><label>Estimated Value (USD)</label><input type="text" id="convertResult" readonly style="font-weight:700;color:var(--green)"></div>
+          </div>
+        </div>
+
         <div id="homeError" class="notice error-notice" hidden></div>
 
         <div class="section">
@@ -388,8 +397,8 @@ tbody tr:hover{background:#ffffff06}
           <div class="card table-card">
             <div class="table-scroll">
               <table>
-                <thead><tr><th>Asset</th><th>Price</th><th>24h change</th><th>Market cap</th></tr></thead>
-                <tbody id="homeMarketRows"><tr><td colspan="4"><div class="empty-state">Connecting to the market data provider...</div></td></tr></tbody>
+                <thead><tr><th>Asset</th><th>Price</th><th>24h change</th><th>Market cap</th><th>Action</th></tr></thead>
+                <tbody id="homeMarketRows"><tr><td colspan="5"><div class="empty-state">Connecting to market data...</div></td></tr></tbody>
               </table>
             </div>
           </div>
@@ -399,7 +408,7 @@ tbody tr:hover{background:#ffffff06}
       <!-- MARKETS PAGE -->
       <section class="page" id="page-markets">
         <div class="heading-row">
-          <div><div class="eyebrow">Explore the market</div><h1>Crypto markets</h1><p class="sub">Search ranked cryptocurrencies and open any asset to explore its price chart or execute demo orders.</p></div>
+          <div><div class="eyebrow">Explore the market</div><h1>Crypto markets</h1><p class="sub">Search ranked cryptocurrencies, sort by category sectors, and execute quick demo trades.</p></div>
           <button class="btn" onclick="loadMarkets(true)">↻ Refresh data</button>
         </div>
         <div id="marketError" class="notice error-notice" hidden></div>
@@ -407,44 +416,46 @@ tbody tr:hover{background:#ffffff06}
           <div class="table-toolbar">
             <div class="search-wrap"><span class="search-symbol">⌕</span><input id="coinSearch" type="search" placeholder="Search name or symbol..." autocomplete="off" aria-label="Search cryptocurrencies"></div>
             <div class="filters">
-              <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All assets</button>
-              <button class="filter-btn" data-filter="gainers" onclick="setFilter('gainers')">Top gainers</button>
-              <button class="filter-btn" data-filter="losers" onclick="setFilter('losers')">Top losers</button>
+              <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All</button>
+              <button class="filter-btn" data-filter="gainers" onclick="setFilter('gainers')">Gainers</button>
+              <button class="filter-btn" data-filter="losers" onclick="setFilter('losers')">Losers</button>
               <button class="filter-btn" data-filter="favorites" onclick="setFilter('favorites')">★ Favorites</button>
+              <button class="filter-btn" data-filter="defi" onclick="setFilter('defi')">DeFi</button>
+              <button class="filter-btn" data-filter="layer1" onclick="setFilter('layer1')">Layer 1</button>
             </div>
           </div>
           <div class="table-scroll">
             <table>
-              <thead><tr><th># / Asset</th><th>Price</th><th>24h change</th><th>Market cap</th><th>24h volume</th><th>Circulating supply</th><th>★</th></tr></thead>
+              <thead><tr><th># / Asset</th><th>Price</th><th>24h change</th><th>Market cap</th><th>24h volume</th><th>★</th><th>Quick Trade</th></tr></thead>
               <tbody id="marketRows"><tr><td colspan="7"><div class="empty-state">Loading live market data...</div></td></tr></tbody>
             </table>
           </div>
           <div class="loading-line" id="marketLoading"></div>
-          <div class="sub" style="padding:13px 17px">Showing up to 100 ranked assets. Available data depends on the provider.</div>
+          <div class="sub" style="padding:13px 17px">Showing up to 100 ranked assets.</div>
         </div>
       </section>
 
-      <!-- TRADE & MONEY MANAGEMENT PAGE -->
+      <!-- TRADE & DEMO PAGE -->
       <section class="page" id="page-trade">
         <div class="heading-row">
-          <div><div class="eyebrow">Simulation Mode</div><h1>Trading & Demo Balance</h1><p class="sub">Test strategies with a $10,000 demo balance. Execute paper buy/sell orders and review transaction history.</p></div>
+          <div><div class="eyebrow">Simulation Mode</div><h1>Trading & Demo Balance</h1><p class="sub">Test strategies with a $10,000 demo balance. Execute paper buy/sell orders and review order history.</p></div>
         </div>
         
         <div class="portfolio-summary" style="margin-bottom:24px">
           <div class="stat-card"><div class="stat-label">💵 Demo cash balance</div><div class="stat-value" id="demoBalance">$10,000.00</div><div class="stat-foot"><button class="text-btn" style="padding:0" onclick="openDepositModal()">+ Deposit / Withdraw Funds</button></div></div>
           <div class="stat-card"><div class="stat-label">📈 Open positions value</div><div class="stat-value" id="demoPositionsValue">$0.00</div><div class="stat-foot">Current valuation</div></div>
-          <div class="stat-card"><div class="stat-label">📊 Realized & Unrealized P&L</div><div class="stat-value" id="demoPnl">$0.00</div><div class="stat-foot">Performance metric</div></div>
+          <div class="stat-card"><div class="stat-label">📊 Unrealized P&L</div><div class="stat-value" id="demoPnl">$0.00</div><div class="stat-foot">Performance metric</div></div>
         </div>
 
         <div class="card" style="padding:22px;margin-bottom:24px">
           <h2>Place Demo Order</h2>
           <p class="sub">Select an asset, specify quantity, and execute a simulated order.</p>
-          <div class="portfolio-form">
+          <div class="portfolio-form" style="grid-template-columns:1fr 1fr auto">
             <div class="field"><label for="tradeCoin">Cryptocurrency</label><select id="tradeCoin"><option value="">Load coins first...</option></select></div>
             <div class="field"><label for="tradeAmount">Order Quantity</label><input id="tradeAmount" type="number" min="0.00000001" step="any" placeholder="e.g. 0.5"></div>
             <div style="display:flex;gap:8px;align-self:end">
-              <button class="btn primary" onclick="executeTrade('BUY')">Buy Asset</button>
-              <button class="btn" style="background:#ff648722;border-color:#ff648755;color:#ff9bb0" onclick="executeTrade('SELL')">Sell Asset</button>
+              <button class="btn primary" onclick="executeTrade('BUY')">Buy</button>
+              <button class="btn" style="background:#ff648722;border-color:#ff648755;color:#ff9bb0" onclick="executeTrade('SELL')">Sell</button>
             </div>
           </div>
         </div>
@@ -462,31 +473,53 @@ tbody tr:hover{background:#ffffff06}
         </div>
       </section>
 
-      <!-- PORTFOLIO / ASSETS PAGE -->
+      <!-- PORTFOLIO & P&L PAGE -->
       <section class="page" id="page-assets">
         <div class="heading-row">
-          <div><div class="eyebrow">Your personal tracker</div><h1>My Portfolio & Cost Basis</h1><p class="sub">Record your coin quantities, average cost basis, and estimate current returns.</p></div>
+          <div><div class="eyebrow">Your personal tracker</div><h1>Portfolio & Cost Basis P&L</h1><p class="sub">Record coin quantities, average purchase cost, and monitor live profit/loss returns.</p></div>
         </div>
         <div class="portfolio-summary">
-          <div class="stat-card"><div class="stat-label">Estimated portfolio value</div><div class="stat-value" id="portfolioValue">$0.00</div><div class="stat-foot">Using available current prices</div></div>
-          <div class="stat-card"><div class="stat-label">Tracked assets</div><div class="stat-value" id="portfolioCount">0</div><div class="stat-foot">Different coins held</div></div>
-          <div class="stat-card"><div class="stat-label">Total holdings units</div><div class="stat-value" id="portfolioUnits">0</div><div class="stat-foot">Across entries</div></div>
+          <div class="stat-card"><div class="stat-label">Estimated portfolio value</div><div class="stat-value" id="portfolioValue">$0.00</div><div class="stat-foot">Using live market prices</div></div>
+          <div class="stat-card"><div class="stat-label">Total Cost Basis</div><div class="stat-value" id="portfolioCostBasis">$0.00</div><div class="stat-foot">Total invested amount</div></div>
+          <div class="stat-card"><div class="stat-label">Total Profit / Loss</div><div class="stat-value" id="portfolioTotalPnl">$0.00</div><div class="stat-foot">Overall return</div></div>
         </div>
         <div class="section card" style="padding:20px">
-          <h2>Add a holding</h2>
-          <p class="sub">Choose a coin, enter quantity and average purchase cost.</p>
+          <h2>Add holding with cost basis</h2>
+          <p class="sub">Enter coin, quantity owned, and average purchase price per coin.</p>
           <form class="portfolio-form" id="holdingForm">
             <div class="field"><label for="holdingCoin">Cryptocurrency</label><select id="holdingCoin" required><option value="">Load coins first...</option></select></div>
-            <div class="field"><label for="holdingAmount">Quantity owned</label><input id="holdingAmount" type="number" min="0.00000001" step="any" placeholder="e.g. 0.25" required></div>
+            <div class="field"><label for="holdingAmount">Quantity owned</label><input id="holdingAmount" type="number" min="0.00000001" step="any" placeholder="e.g. 0.5" required></div>
+            <div class="field"><label for="holdingCost">Avg Purchase Price ($)</label><input id="holdingCost" type="number" min="0" step="any" placeholder="e.g. 62000" required></div>
             <button class="btn primary" type="submit" style="align-self:end">+ Add holding</button>
           </form>
         </div>
         <div class="section">
           <div class="section-head"><h2>Your holdings</h2><button class="text-btn" onclick="renderPortfolio()">Recalculate</button></div>
           <div class="card table-card"><div class="table-scroll"><table>
-            <thead><tr><th>Asset</th><th>Quantity</th><th>Price</th><th>Estimated value</th><th>Action</th></tr></thead>
-            <tbody id="portfolioRows"><tr><td colspan="5"><div class="empty-state">No holdings yet. Add your first coin above.</div></td></tr></tbody>
+            <thead><tr><th>Asset</th><th>Quantity</th><th>Avg Cost</th><th>Current Price</th><th>Estimated Value</th><th>Profit / Loss</th><th>Action</th></tr></thead>
+            <tbody id="portfolioRows"><tr><td colspan="7"><div class="empty-state">No holdings yet. Add your first coin above.</div></td></tr></tbody>
           </table></div></div>
+        </div>
+      </section>
+
+      <!-- LEADERBOARD PAGE -->
+      <section class="page" id="page-leaderboard">
+        <div class="heading-row">
+          <div><div class="eyebrow">Community Competition</div><h1>Paper Trading Leaderboard</h1><p class="sub">Top demo traders ranked by simulated return percentages this week.</p></div>
+        </div>
+        <div class="card table-card">
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Rank</th><th>Trader</th><th>Simulated Portfolio</th><th>24h Return</th><th>Tier</th></tr></thead>
+              <tbody>
+                <tr><td>🥇 1</td><td>CryptoWhale99</td><td>$24,850.00</td><td class="positive">+148.5%</td><td>Diamond</td></tr>
+                <tr><td>🥈 2</td><td>SatoshiPulse</td><td>$18,420.50</td><td class="positive">+84.2%</td><td>Platinum</td></tr>
+                <tr><td>🥉 3</td><td>AlphaTraderX</td><td>$14,310.00</td><td class="positive">+43.1%</td><td>Gold</td></tr>
+                <tr><td>4</td><td>EtherKnight</td><td>$11,920.10</td><td class="positive">+19.2%</td><td>Silver</td></tr>
+                <tr><td>5</td><td>You (Guest Trader)</td><td id="leaderboardUserVal">$10,000.00</td><td id="leaderboardUserRet" class="muted">0.0%</td><td>Bronze</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -509,9 +542,6 @@ tbody tr:hover{background:#ffffff06}
           <div class="stat-card"><div class="stat-label">🏆 Referral tier</div><div class="stat-value">Silver</div><div class="stat-foot">Next tier at 10 referrals</div></div>
           <div class="stat-card"><div class="stat-label">🔒 Payout status</div><div class="stat-value" style="font-size:16px;color:var(--muted)">Demo Mode</div><div class="stat-foot">Requires backend & KYC</div></div>
         </div>
-        <div class="notice" style="margin-top:20px">
-          <strong>Referral Fairness & Security Note:</strong> Demo rewards are credited instantly for testing purposes. Real monetary payouts will enforce secure backend tracking, anti-fraud verifications, and eligibility rules before distribution.
-        </div>
       </section>
 
       <!-- SUPPORT PAGE -->
@@ -529,14 +559,6 @@ tbody tr:hover{background:#ffffff06}
             <button class="btn primary" type="submit" style="align-self:flex-start">Send Support Ticket</button>
           </form>
         </div>
-        <div class="card" style="padding:24px">
-          <h2>Frequently Asked Questions</h2>
-          <div style="margin-top:15px;display:flex;flex-direction:column;gap:15px">
-            <div><strong>Q: Are the funds in demo trading real?</strong><p class="sub" style="margin-top:4px">No. Demo trading uses simulated balances ($10,000 virtual cash) for testing and educational purposes only.</p></div>
-            <div><strong>Q: Where does market data come from?</strong><p class="sub" style="margin-top:4px">Prices, volumes, and historical charts are supplied via live public endpoints provided by CoinGecko.</p></div>
-            <div><strong>Q: Can I connect my personal crypto wallet?</strong><p class="sub" style="margin-top:4px">CoinPulse currently operates as a market intelligence and portfolio tracker. Direct web3 wallet connectivity requires secure authentication modules.</p></div>
-          </div>
-        </div>
       </section>
 
       <!-- PROFILE PAGE -->
@@ -550,13 +572,9 @@ tbody tr:hover{background:#ffffff06}
           <button class="btn primary" onclick="openAccountModal()">Sign in / Sign up</button>
         </div>
         <div class="feature-grid">
-          <div class="card feature-card"><div class="feature-icon">★</div><h3>Favorite coins</h3><p>Mark assets with a star and find them in Markets → Favorites. Your selection stays in this browser.</p><button class="text-btn" onclick="setFilter('favorites');navigate('markets')">View favorites →</button></div>
-          <div class="card feature-card"><div class="feature-icon">▤</div><h3>Portfolio tracker</h3><p>Record your holdings and estimate their value from available live market prices.</p><button class="text-btn" onclick="navigate('assets')">Manage assets →</button></div>
-          <div class="card feature-card"><div class="feature-icon">◷</div><h3>Price history</h3><p>Explore candlestick charts with multiple historical periods for supported coins.</p><button class="text-btn" onclick="navigate('markets')">Explore charts →</button></div>
-        </div>
-        <div class="section card" style="padding:22px">
-          <h2>Account and privacy</h2>
-          <p class="sub">Sign-up, login, cloud watchlists and price alerts require a secure authentication and database service. They are not enabled in this standalone prototype. Do not enter a real password here.</p>
+          <div class="card feature-card"><div class="feature-icon">★</div><h3>Favorite coins</h3><p>Mark assets with a star and find them in Markets → Favorites.</p><button class="text-btn" onclick="setFilter('favorites');navigate('markets')">View favorites →</button></div>
+          <div class="card feature-card"><div class="feature-icon">▤</div><h3>Portfolio tracker</h3><p>Record holdings and monitor real-time P&L performance.</p><button class="text-btn" onclick="navigate('assets')">Manage portfolio →</button></div>
+          <div class="card feature-card"><div class="feature-icon">◷</div><h3>Price history</h3><p>Explore candlestick charts with multiple historical periods.</p><button class="text-btn" onclick="navigate('markets')">Explore charts →</button></div>
         </div>
       </section>
 
@@ -568,7 +586,7 @@ tbody tr:hover{background:#ffffff06}
           <a href="#" onclick="openLegalModal('risk');return false">Risk Disclosure</a>
           <a href="#" onclick="navigate('support');return false">Contact Support</a>
         </div>
-        <p>© 2026 CoinPulse Platforms Inc. All rights reserved. Market data supplied by CoinGecko. Cryptocurrency trading involves substantial risk of loss and is not suitable for every investor.</p>
+        <p>© 2026 CoinPulse Platforms Inc. All rights reserved. Market data supplied by CoinGecko.</p>
       </footer>
     </main>
   </div>
@@ -579,7 +597,7 @@ tbody tr:hover{background:#ffffff06}
     <button class="nav-btn" data-page="markets" onclick="navigate('markets')"><span class="nav-icon">◈</span>Markets</button>
     <button class="nav-btn" data-page="trade" onclick="navigate('trade')"><span class="nav-icon">⚡</span>Trade</button>
     <button class="nav-btn" data-page="assets" onclick="navigate('assets')"><span class="nav-icon">▤</span>Assets</button>
-    <button class="nav-btn" data-page="referral" onclick="navigate('referral')"><span class="nav-icon">🎁</span>Referral</button>
+    <button class="nav-btn" data-page="leaderboard" onclick="navigate('leaderboard')"><span class="nav-icon">🏆</span>Ranks</button>
     <button class="nav-btn" data-page="profile" onclick="navigate('profile')"><span class="nav-icon">◎</span>Profile</button>
   </nav>
 </div>
@@ -592,11 +610,22 @@ tbody tr:hover{background:#ffffff06}
     <button class="close-btn" style="width:28px;height:28px;font-size:16px" onclick="toggleAiModal()">×</button>
   </div>
   <div class="ai-body" id="aiChatBody">
-    <div class="ai-msg bot">Hello! I'm your CoinPulse AI helper. Ask me about crypto terms, portfolio tracking, or platform features!</div>
+    <div class="ai-msg bot">Hello! I'm your CoinPulse AI helper. Ask me about portfolio P&L, trading strategies, or platform features!</div>
   </div>
   <div class="ai-footer">
     <input type="text" id="aiInput" placeholder="Ask a crypto question..." onkeydown="if(event.key==='Enter')sendAiMessage()">
     <button class="btn primary small" onclick="sendAiMessage()">Send</button>
+  </div>
+</div>
+
+<!-- Notifications Modal -->
+<div class="modal-backdrop" id="notifModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeNotificationsModal()">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head"><h2>Notification Center</h2><button class="close-btn" onclick="closeNotificationsModal()">×</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div class="card" style="padding:14px"><strong>⚡ Platform Update</strong><p class="sub" style="margin-top:4px">New P&L cost basis tracking and quick trade buttons are now live!</p></div>
+      <div class="card" style="padding:14px"><strong>📈 Market Alert</strong><p class="sub" style="margin-top:4px">Bitcoin volatility detected past 24 hours. Check candlestick charts for details.</p></div>
+    </div>
   </div>
 </div>
 
@@ -625,28 +654,15 @@ tbody tr:hover{background:#ffffff06}
         <button class="period-btn" data-days="max" onclick="changePeriod('ALL',this)">ALL</button>
       </div>
       <div id="chart"><div class="chart-message">Choose a coin to load its historical chart.</div></div>
-      <div id="chartNotice" class="notice" hidden></div>
     </div>
-    <div class="modal-foot">Historical candlestick data is supplied by CoinGecko. Available history and granularity vary by asset and selected period.</div>
-  </div>
-</div>
-
-<!-- Account Modal -->
-<div class="modal-backdrop" id="accountModal" role="dialog" aria-modal="true" aria-labelledby="accountTitle" onclick="if(event.target===this)closeAccountModal()">
-  <div class="modal" style="max-width:440px">
-    <div class="modal-head"><h2 id="accountTitle">CoinPulse account</h2><button class="close-btn" onclick="closeAccountModal()" aria-label="Close">×</button></div>
-    <div class="modal-body">
-      <div class="notice">Authentication has not been connected yet. This is an informational preview only; it will not create an account or send credentials anywhere.</div>
-      <p class="sub">When secure authentication is enabled, this area can support account sign-in, saved watchlists, cloud-synced holdings and price alerts.</p>
-      <button class="btn primary" style="width:100%" onclick="closeAccountModal();showToast('Account creation is not enabled in this prototype.')">Got it</button>
-    </div>
+    <div class="modal-foot">Historical candlestick data supplied by CoinGecko.</div>
   </div>
 </div>
 
 <!-- Deposit / Withdraw Modal -->
-<div class="modal-backdrop" id="depositModal" role="dialog" aria-modal="true" aria-labelledby="depositTitle" onclick="if(event.target===this)closeDepositModal()">
+<div class="modal-backdrop" id="depositModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeDepositModal()">
   <div class="modal" style="max-width:440px">
-    <div class="modal-head"><h2 id="depositTitle">Demo Funds Management</h2><button class="close-btn" onclick="closeDepositModal()" aria-label="Close">×</button></div>
+    <div class="modal-head"><h2>Demo Funds Management</h2><button class="close-btn" onclick="closeDepositModal()">×</button></div>
     <div class="modal-body">
       <div class="notice">Simulate topping up or withdrawing virtual funds in your demo account.</div>
       <div class="field" style="margin:15px 0"><label>Amount (USD)</label><input type="number" id="depositAmountInput" value="5000" min="1" step="any"></div>
@@ -658,10 +674,20 @@ tbody tr:hover{background:#ffffff06}
   </div>
 </div>
 
-<!-- Legal Modal -->
-<div class="modal-backdrop" id="legalModal" role="dialog" aria-modal="true" aria-labelledby="legalTitle" onclick="if(event.target===this)closeLegalModal()">
+<!-- Account & Legal Modals -->
+<div class="modal-backdrop" id="accountModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeAccountModal()">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head"><h2>CoinPulse account</h2><button class="close-btn" onclick="closeAccountModal()">×</button></div>
+    <div class="modal-body">
+      <div class="notice">Authentication has not been connected yet. This is an informational preview.</div>
+      <button class="btn primary" style="width:100%" onclick="closeAccountModal()">Got it</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="legalModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeLegalModal()">
   <div class="modal" style="max-width:600px">
-    <div class="modal-head"><h2 id="legalTitle">Legal Information</h2><button class="close-btn" onclick="closeLegalModal()" aria-label="Close">×</button></div>
+    <div class="modal-head"><h2 id="legalTitle">Legal Information</h2><button class="close-btn" onclick="closeLegalModal()">×</button></div>
     <div class="modal-body" id="legalModalContent" style="line-height:1.7;font-size:13px;color:var(--muted)"></div>
   </div>
 </div>
@@ -674,7 +700,7 @@ tbody tr:hover{background:#ffffff06}
 const API = "https://api.coingecko.com/api/v3";
 const REFRESH_MS = 30000;
 const STORAGE_FAVORITES = "coinpulse_favorites_v1";
-const STORAGE_PORTFOLIO = "coinpulse_portfolio_v1";
+const STORAGE_PORTFOLIO = "coinpulse_portfolio_v2";
 const STORAGE_DEMO_CASH = "coinpulse_demo_cash_v1";
 const STORAGE_TRADES = "coinpulse_trades_v1";
 
@@ -704,7 +730,6 @@ function writeStorage(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch (error) {
-    showToast("Browser storage is unavailable.");
     return false;
   }
 }
@@ -718,15 +743,10 @@ if (!Array.isArray(favorites)) favorites = [];
 if (!Array.isArray(portfolio)) portfolio = [];
 if (!Array.isArray(tradeHistory)) tradeHistory = [];
 
-function money(value, maximumFractionDigits = 2) {
+function money(value, maxDigits = 2) {
   if (value === null || value === undefined || !Number.isFinite(Number(value))) return "—";
-  const number = Number(value);
-  return number.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: number > 0 && number < 0.01 ? 4 : 2,
-    maximumFractionDigits
-  });
+  const num = Number(value);
+  return num.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: num > 0 && num < 0.01 ? 4 : 2, maximumFractionDigits: maxDigits });
 }
 
 function compactMoney(value) {
@@ -736,7 +756,6 @@ function compactMoney(value) {
   if (abs >= 1e12) return "$" + (n / 1e12).toFixed(2) + "T";
   if (abs >= 1e9) return "$" + (n / 1e9).toFixed(2) + "B";
   if (abs >= 1e6) return "$" + (n / 1e6).toFixed(2) + "M";
-  if (abs >= 1e3) return "$" + (n / 1e3).toFixed(2) + "K";
   return money(n);
 }
 
@@ -751,9 +770,7 @@ function changeClass(value) {
 }
 
 function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, ch => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  })[ch]);
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[ch]);
 }
 
 function showToast(message) {
@@ -781,9 +798,9 @@ function navigate(pageId) {
 
   if (pageId === 'trade') renderTradeSummary();
   if (pageId === 'assets') renderPortfolio();
+  if (pageId === 'leaderboard') updateLeaderboardUser();
 }
 
-/* Load Markets from CoinGecko */
 async function loadMarkets(manual = false) {
   if (manual) showToast("Refreshing market data...");
   setConnection(true, "Updating markets...");
@@ -795,7 +812,7 @@ async function loadMarkets(manual = false) {
       fetch(`${API}/global`)
     ]);
 
-    if (!marketRes.ok) throw new Error("Market API rate limit reached.");
+    if (!marketRes.ok) throw new Error("API rate limit reached.");
     coins = await marketRes.json();
     
     if (globalRes.ok) {
@@ -804,16 +821,16 @@ async function loadMarkets(manual = false) {
       renderGlobalStats();
     }
 
-    lastSuccessfulLoad = Date.now();
     setConnection(true, "Live market synced");
     renderHome();
     renderMarkets();
     populateCoinSelectors();
+    calculateConversion();
   } catch (err) {
     setConnection(false, "API rate limited / offline");
-    document.getElementById("homeError").textContent = "Unable to fetch live CoinGecko market data. Please wait a moment and click Refresh.";
+    document.getElementById("homeError").textContent = "Unable to fetch live CoinGecko market data. Please click Refresh.";
     document.getElementById("homeError").hidden = false;
-    document.getElementById("marketError").textContent = "Market data temporarily unavailable due to rate limits.";
+    document.getElementById("marketError").textContent = "Market data temporarily unavailable.";
     document.getElementById("marketError").hidden = false;
   } finally {
     document.getElementById("marketLoading").style.display = "none";
@@ -836,10 +853,7 @@ function renderGlobalStats() {
 function renderHome() {
   const featured = coins.slice(0, 5);
   const strip = document.getElementById("featuredCoins");
-  if (!featured.length) {
-    strip.innerHTML = `<div class="card" style="padding:20px"><p class="sub">No featured assets available.</p></div>`;
-    return;
-  }
+  if (!featured.length) return;
   strip.innerHTML = featured.map(c => `
     <button class="coin-card" onclick="openCoinModal('${c.id}')">
       <div class="coin-top">
@@ -860,6 +874,7 @@ function renderHome() {
       <td class="table-number"><strong>${money(c.current_price)}</strong></td>
       <td class="table-number ${changeClass(c.price_change_percentage_24h)}">${changeText(c.price_change_percentage_24h)}</td>
       <td class="table-number muted">${compactMoney(c.market_cap)}</td>
+      <td><button class="btn small primary" onclick="event.stopPropagation();quickTrade('${c.id}')">⚡ Trade</button></td>
     </tr>
   `).join("");
 }
@@ -878,6 +893,10 @@ function renderMarkets() {
     list.sort((a, b) => (a.price_change_percentage_24h || 0) - (b.price_change_percentage_24h || 0));
   } else if (currentFilter === "favorites") {
     list = list.filter(c => favorites.includes(c.id));
+  } else if (currentFilter === "defi") {
+    list = list.filter(c => ['uniswap', 'aave', 'chainlink', 'maker', 'curve-dao-token'].includes(c.id));
+  } else if (currentFilter === "layer1") {
+    list = list.filter(c => ['bitcoin', 'ethereum', 'solana', 'cardano', 'avalanche-2', 'binancecoin'].includes(c.id));
   }
 
   const tbody = document.getElementById("marketRows");
@@ -895,8 +914,8 @@ function renderMarkets() {
         <td class="table-number ${changeClass(c.price_change_percentage_24h)}">${changeText(c.price_change_percentage_24h)}</td>
         <td class="table-number muted">${compactMoney(c.market_cap)}</td>
         <td class="table-number muted">${compactMoney(c.total_volume)}</td>
-        <td class="table-number muted">${compactNumber(c.circulating_supply)} ${c.symbol.toUpperCase()}</td>
         <td><button class="star ${isFav ? 'on' : ''}" onclick="event.stopPropagation();toggleFavorite('${c.id}')" aria-label="Favorite">★</button></td>
+        <td><button class="btn small primary" onclick="event.stopPropagation();quickTrade('${c.id}')">⚡ Trade</button></td>
       </tr>
     `;
   }).join("");
@@ -921,48 +940,57 @@ function toggleFavorite(id) {
   }
   writeStorage(STORAGE_FAVORITES, favorites);
   renderMarkets();
-  if (selectedCoin && selectedCoin.id === id) {
-    updateFavoriteButton();
-  }
+  if (selectedCoin && selectedCoin.id === id) updateFavoriteButton();
 }
 
 function populateCoinSelectors() {
   const options = coins.map(c => `<option value="${c.id}">${c.name} (${c.symbol.toUpperCase()})</option>`).join("");
-  const holdingSelect = document.getElementById("holdingCoin");
-  const tradeSelect = document.getElementById("tradeCoin");
-  if (holdingSelect) holdingSelect.innerHTML = `<option value="">Select coin...</option>` + options;
-  if (tradeSelect) tradeSelect.innerHTML = `<option value="">Select coin...</option>` + options;
+  ['holdingCoin', 'tradeCoin', 'convertFrom'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = options;
+  });
 }
 
-/* Portfolio & Holdings */
+function quickTrade(coinId) {
+  navigate('trade');
+  const sel = document.getElementById("tradeCoin");
+  if (sel) sel.value = coinId;
+  showToast("Asset pre-filled for demo trade!");
+}
+
+function calculateConversion() {
+  const amt = Number(document.getElementById("convertAmount").value || 0);
+  const coinId = document.getElementById("convertFrom").value;
+  const coin = coins.find(c => c.id === coinId);
+  const price = coin ? coin.current_price : (coinId === 'btc' ? 65000 : coinId === 'eth' ? 3500 : 1);
+  document.getElementById("convertResult").value = money(amt * price);
+}
+
+/* Portfolio & P&L Tracker */
 document.getElementById("holdingForm")?.addEventListener("submit", function(e) {
   e.preventDefault();
   const coinId = document.getElementById("holdingCoin").value;
   const amount = Number(document.getElementById("holdingAmount").value);
+  const avgCost = Number(document.getElementById("holdingCost").value);
   if (!coinId || !amount || amount <= 0) return;
 
-  const existing = portfolio.find(p => p.id === coinId);
-  if (existing) {
-    existing.amount += amount;
-  } else {
-    portfolio.push({ id: coinId, amount });
-  }
+  portfolio.push({ id: coinId, amount, avgCost });
   writeStorage(STORAGE_PORTFOLIO, portfolio);
   renderPortfolio();
   this.reset();
-  showToast("Holding added successfully!");
+  showToast("Holding added with cost basis!");
 });
 
 function renderPortfolio() {
   let totalValue = 0;
-  let totalUnits = 0;
+  let totalCostBasis = 0;
   const tbody = document.getElementById("portfolioRows");
   
   if (!portfolio.length) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No holdings yet. Add your first coin above.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">No holdings yet. Add your first coin above.</div></td></tr>`;
     document.getElementById("portfolioValue").textContent = "$0.00";
-    document.getElementById("portfolioCount").textContent = "0";
-    document.getElementById("portfolioUnits").textContent = "0";
+    document.getElementById("portfolioCostBasis").textContent = "$0.00";
+    document.getElementById("portfolioTotalPnl").textContent = "$0.00";
     return;
   }
 
@@ -970,23 +998,33 @@ function renderPortfolio() {
     const coin = coins.find(c => c.id === item.id);
     const price = coin ? coin.current_price : 0;
     const val = price * item.amount;
+    const cost = (item.avgCost || 0) * item.amount;
+    const pnl = val - cost;
+    const pnlPercent = cost > 0 ? (pnl / cost) * 100 : 0;
+
     totalValue += val;
-    totalUnits += item.amount;
+    totalCostBasis += cost;
 
     return `
       <tr>
         <td><div class="coin-cell">${coin ? `<img src="${coin.image}" alt="">` : ''}<div><div class="coin-title">${coin ? escapeHTML(coin.name) : item.id}</div><div class="coin-sub">${coin ? coin.symbol.toUpperCase() : ''}</div></div></div></td>
         <td class="table-number">${item.amount.toLocaleString()}</td>
+        <td class="table-number">${money(item.avgCost)}</td>
         <td class="table-number">${money(price)}</td>
         <td class="table-number"><strong>${money(val)}</strong></td>
+        <td class="table-number ${changeClass(pnl)}">${money(pnl)} (${changeText(pnlPercent)})</td>
         <td><button class="btn small" style="color:#ff6487" onclick="removeHolding(${index})">Remove</button></td>
       </tr>
     `;
   }).join("");
 
+  const totalPnl = totalValue - totalCostBasis;
   document.getElementById("portfolioValue").textContent = money(totalValue);
-  document.getElementById("portfolioCount").textContent = portfolio.length;
-  document.getElementById("portfolioUnits").textContent = totalUnits.toLocaleString(undefined, {maximumFractionDigits:4});
+  document.getElementById("portfolioCostBasis").textContent = money(totalCostBasis);
+  const pnlEl = document.getElementById("portfolioTotalPnl");
+  pnlEl.textContent = money(totalPnl);
+  pnlEl.className = "stat-value " + changeClass(totalPnl);
+  updateLeaderboardUser();
 }
 
 function removeHolding(index) {
@@ -996,25 +1034,38 @@ function removeHolding(index) {
   showToast("Holding removed");
 }
 
-/* Demo Trading & Money Management */
+function updateLeaderboardUser() {
+  let val = demoCash;
+  portfolio.forEach(item => {
+    const coin = coins.find(c => c.id === item.id);
+    if (coin) val += coin.current_price * item.amount;
+  });
+  const ret = ((val - 10000) / 10000) * 100;
+  const userValEl = document.getElementById("leaderboardUserVal");
+  const userRetEl = document.getElementById("leaderboardUserRet");
+  if (userValEl) userValEl.textContent = money(val);
+  if (userRetEl) {
+    userRetEl.textContent = changeText(ret);
+    userRetEl.className = "table-number " + changeClass(ret);
+  }
+}
+
+/* Demo Trading */
 function renderTradeSummary() {
   document.getElementById("demoBalance").textContent = money(demoCash);
   let positionsVal = 0;
   tradeHistory.forEach(t => {
     const coin = coins.find(c => c.id === t.coinId);
-    if (coin && t.type === 'BUY') {
-      positionsVal += t.amount * coin.current_price;
-    }
+    if (coin && t.type === 'BUY') positionsVal += t.amount * coin.current_price;
   });
   document.getElementById("demoPositionsValue").textContent = money(positionsVal);
-  document.getElementById("demoPnl").textContent = money(positionsVal - 5000); // Baseline demo metric
+  document.getElementById("demoPnl").textContent = money(positionsVal - 5000);
 
   const tbody = document.getElementById("tradeHistoryRows");
   if (!tradeHistory.length) {
     tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No demo transactions executed yet.</div></td></tr>`;
     return;
   }
-
   tbody.innerHTML = tradeHistory.map(t => `
     <tr>
       <td class="muted">${new Date(t.time).toLocaleTimeString()}</td>
@@ -1034,31 +1085,19 @@ function executeTrade(type) {
     showToast("Please select a coin and enter a valid quantity.");
     return;
   }
-
   const coin = coins.find(c => c.id === coinId);
   if (!coin) return;
 
   const totalCost = amount * coin.current_price;
   if (type === 'BUY') {
-    if (demoCash < totalCost) {
-      showToast("Insufficient demo cash balance!");
-      return;
-    }
+    if (demoCash < totalCost) { showToast("Insufficient demo cash balance!"); return; }
     demoCash -= totalCost;
   } else {
     demoCash += totalCost;
   }
 
   writeStorage(STORAGE_DEMO_CASH, demoCash);
-  tradeHistory.unshift({
-    time: Date.now(),
-    type,
-    coinId,
-    coinSymbol: coin.symbol,
-    amount,
-    price: coin.current_price,
-    total: totalCost
-  });
+  tradeHistory.unshift({ time: Date.now(), type, coinId, coinSymbol: coin.symbol, amount, price: coin.current_price, total: totalCost });
   writeStorage(STORAGE_TRADES, tradeHistory);
 
   renderTradeSummary();
@@ -1072,26 +1111,21 @@ function closeDepositModal() { document.getElementById("depositModal").classList
 function processDepositWithdraw(action) {
   const amount = Number(document.getElementById("depositAmountInput").value);
   if (!amount || amount <= 0) return;
-  if (action === 'DEPOSIT') {
-    demoCash += amount;
-    showToast(`Deposited $${amount.toLocaleString()} demo cash.`);
-  } else {
-    if (demoCash < amount) {
-      showToast("Insufficient demo funds to withdraw.");
-      return;
-    }
+  if (action === 'DEPOSIT') demoCash += amount;
+  else {
+    if (demoCash < amount) { showToast("Insufficient demo funds."); return; }
     demoCash -= amount;
-    showToast(`Withdrew $${amount.toLocaleString()} demo cash.`);
   }
   writeStorage(STORAGE_DEMO_CASH, demoCash);
   renderTradeSummary();
   closeDepositModal();
+  showToast("Demo funds updated.");
 }
 
-/* AI Assistant */
-function toggleAiModal() {
-  document.getElementById("aiModal").classList.toggle("open");
-}
+/* AI Assistant & Notifications */
+function toggleAiModal() { document.getElementById("aiModal").classList.toggle("open"); }
+function openNotificationsModal() { document.getElementById("notifModal").classList.add("open"); }
+function closeNotificationsModal() { document.getElementById("notifModal").classList.remove("open"); }
 
 function sendAiMessage() {
   const input = document.getElementById("aiInput");
@@ -1104,33 +1138,25 @@ function sendAiMessage() {
   body.scrollTop = body.scrollHeight;
 
   setTimeout(() => {
-    let reply = "I can help you understand crypto concepts, navigate CoinPulse features, or review your portfolio metrics!";
+    let reply = "I can help you review your portfolio P&L, explore DeFi and Layer 1 coins, or check market stats!";
     const lower = text.toLowerCase();
-    if (lower.includes("demo") || lower.includes("trade")) {
-      reply = "Demo trading lets you test strategies with $10,000 in virtual cash without risking real capital.";
-    } else if (lower.includes("referral")) {
-      reply = "You can invite friends using your unique referral link found under the Referral tab to earn demo tier rewards.";
-    } else if (lower.includes("bitcoin") || lower.includes("btc")) {
-      reply = "Bitcoin is tracked live via CoinGecko data feeds. You can inspect its 24h volume, market dominance, and historical candlestick charts by clicking on it in the Markets list!";
-    }
+    if (lower.includes("p&l") || lower.includes("profit")) reply = "Your portfolio P&L tracks your average purchase cost against current live market prices automatically.";
+    else if (lower.includes("trade") || lower.includes("demo")) reply = "Use the Trade tab or the ⚡ Quick Trade buttons in the market table to test paper trades with your $10,000 balance.";
     body.innerHTML += `<div class="ai-msg bot">${reply}</div>`;
     body.scrollTop = body.scrollHeight;
   }, 600);
 }
 
-/* Referral */
 function copyReferralLink() {
   navigator.clipboard.writeText("https://coinpulse.io/ref/CP-9482-USER");
-  showToast("Referral link copied to clipboard!");
+  showToast("Referral link copied!");
 }
 
-/* Legal Modals */
 const legalTexts = {
-  terms: "<h3>Terms of Service</h3><p>By accessing CoinPulse, you agree to comply with these terms. CoinPulse provides cryptocurrency market intelligence and educational simulation tools. All data and demo trading features are provided 'as is' without warranty of any kind.</p>",
-  privacy: "<h3>Privacy Policy</h3><p>CoinPulse respects your privacy. Preferences such as watchlists and portfolio items are stored locally in your browser. We do not collect or store personal private keys or passwords on public static hosting.</p>",
-  risk: "<h3>Risk Disclosure</h3><p>Cryptocurrency trading carries a high degree of risk and may not be suitable for all investors. Past performance is not indicative of future results. Demo trading results do not represent actual trading performance.</p>"
+  terms: "<h3>Terms of Service</h3><p>By accessing CoinPulse, you agree to comply with these terms. Educational simulation tools only.</p>",
+  privacy: "<h3>Privacy Policy</h3><p>Watchlists and portfolio data are stored locally in your browser.</p>",
+  risk: "<h3>Risk Disclosure</h3><p>Cryptocurrency trading carries high risk. Demo results do not represent actual trading.</p>"
 };
-
 function openLegalModal(type) {
   document.getElementById("legalTitle").textContent = type === 'terms' ? 'Terms of Service' : type === 'privacy' ? 'Privacy Policy' : 'Risk Disclosure';
   document.getElementById("legalModalContent").innerHTML = legalTexts[type] || '';
@@ -1138,7 +1164,6 @@ function openLegalModal(type) {
 }
 function closeLegalModal() { document.getElementById("legalModal").classList.remove("open"); }
 
-/* Coin Modal & Charts */
 async function openCoinModal(id) {
   const coin = coins.find(c => c.id === id);
   if (!coin) return;
@@ -1149,10 +1174,9 @@ async function openCoinModal(id) {
   document.getElementById("detailSymbol").textContent = coin.symbol.toUpperCase();
   document.getElementById("detailPrice").textContent = money(coin.current_price);
   document.getElementById("detailChange").textContent = `24h Change: ${changeText(coin.price_change_percentage_24h)}`;
-  document.getElementById("detailChange").className = "sub " + changeClass(coin.price_change_percentage_24h);
   document.getElementById("detailCap").textContent = compactMoney(coin.market_cap);
   document.getElementById("detailVolume").textContent = compactMoney(coin.total_volume);
-  document.getElementById("detailSupply").textContent = compactNumber(coin.circulating_supply) + " " + coin.symbol.toUpperCase();
+  document.getElementById("detailSupply").textContent = Number(coin.circulating_supply || 0).toLocaleString() + " " + coin.symbol.toUpperCase();
 
   updateFavoriteButton();
   document.getElementById("coinModal").classList.add("open");
@@ -1162,11 +1186,7 @@ async function openCoinModal(id) {
 function closeCoinModal() {
   document.getElementById("coinModal").classList.remove("open");
   selectedCoin = null;
-  if (chart) {
-    chart.remove();
-    chart = null;
-    candleSeries = null;
-  }
+  if (chart) { chart.remove(); chart = null; }
 }
 
 function updateFavoriteButton() {
@@ -1187,8 +1207,7 @@ function changePeriod(label, btn) {
   document.querySelectorAll(".period-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   currentPeriod = label;
-  const days = btn.dataset.days;
-  if (selectedCoin) loadChart(selectedCoin.id, days);
+  if (selectedCoin) loadChart(selectedCoin.id, btn.dataset.days);
 }
 
 async function loadChart(coinId, days) {
@@ -1198,17 +1217,12 @@ async function loadChart(coinId, days) {
 
   try {
     const res = await fetch(`${API}/coins/${coinId}/ohlc?vs_currency=usd&days=${days}`);
-    if (!res.ok) throw new Error("Chart history unavailable");
+    if (!res.ok) throw new Error();
     const data = await res.json();
-
-    if (requestId !== chartRequest) return;
-    if (!Array.isArray(data) || !data.length) throw new Error("No chart data");
+    if (requestId !== chartRequest || !Array.isArray(data)) return;
 
     container.innerHTML = "";
-    if (chart) {
-      chart.remove();
-      chart = null;
-    }
+    if (chart) { chart.remove(); chart = null; }
 
     chart = LightweightCharts.createChart(container, {
       layout: { background: { type: 'solid', color: '#100f24' }, textColor: '#9290b3' },
@@ -1217,28 +1231,11 @@ async function loadChart(coinId, days) {
       rightPriceScale: { borderColor: 'rgba(164,150,255,0.15)' }
     });
 
-    candleSeries = chart.addCandlestickSeries({
-      upColor: '#37e3a0', downColor: '#ff6487', borderVisible: false, wickUpColor: '#37e3a0', wickDownColor: '#ff6487'
-    });
-
-    const formatted = data.map(item => ({
-      time: Math.floor(item[0] / 1000),
-      open: item[1], high: item[2], low: item[3], close: item[4]
-    }));
-
-    candleSeries.setData(formatted);
+    candleSeries = chart.addCandlestickSeries({ upColor: '#37e3a0', downColor: '#ff6487', borderVisible: false });
+    candleSeries.setData(data.map(item => ({ time: Math.floor(item[0] / 1000), open: item[1], high: item[2], low: item[3], close: item[4] })));
     chart.timeScale().fitContent();
-
-    if (!chartResize) {
-      chartResize = () => {
-        if (chart && container.clientWidth) chart.resize(container.clientWidth, container.clientHeight);
-      };
-      window.addEventListener("resize", chartResize);
-    }
   } catch (err) {
-    if (requestId === chartRequest) {
-      container.innerHTML = `<div class="chart-message">Candle history unavailable for this asset or time range.</div>`;
-    }
+    if (requestId === chartRequest) container.innerHTML = `<div class="chart-message">Candle history unavailable for this asset.</div>`;
   }
 }
 
@@ -1246,12 +1243,9 @@ function openAccountModal() { document.getElementById("accountModal").classList.
 function closeAccountModal() { document.getElementById("accountModal").classList.remove("open"); }
 
 document.getElementById("coinSearch")?.addEventListener("input", () => {
-  if (document.getElementById("page-markets").classList.contains("active")) {
-    renderMarkets();
-  }
+  if (document.getElementById("page-markets").classList.contains("active")) renderMarkets();
 });
 
-// Initial load
 loadMarkets();
 refreshTimer = setInterval(() => loadMarkets(false), REFRESH_MS);
 </script>
