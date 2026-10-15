@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoinPulse — Crypto Markets</title>
+<meta name="description" content="Track cryptocurrency prices, market movements and historical charts.">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#080c14;--panel:#101725;--line:#202b3d;--muted:#8c9bb0;--text:#f4f7fc;--blue:#6688ff;--green:#32d49a;--red:#ff6578}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+button,input{font:inherit}
+button{cursor:pointer}
+.top{height:70px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 max(5%,calc((100% - 1200px)/2));gap:16px}
+.brand{font-size:23px;font-weight:850;letter-spacing:-1px}.brand span{color:var(--blue)}
+.status{color:var(--green);font-size:12px;display:flex;align-items:center;gap:7px}
+.dot{height:7px;width:7px;background:var(--green);border-radius:50%;display:inline-block}
+main{max-width:1200px;margin:auto;padding:32px 20px 60px}
+h1{font-size:clamp(27px,4vw,40px);letter-spacing:-1.5px;margin:0 0 8px}
+.sub{color:var(--muted);margin:0 0 28px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:28px}
+.stat,.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.stat{padding:18px}.label{color:var(--muted);font-size:12px;margin-bottom:12px}.value{font-size:23px;font-weight:750}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:28px 0 16px;flex-wrap:wrap}
+h2{font-size:20px;margin:0}
+.search{width:min(100%,310px);background:#0b111d;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px 14px;outline:none}
+.search:focus{border-color:var(--blue)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:650px}
+th{text-align:right;color:var(--muted);font-size:11px;font-weight:600;padding:15px 16px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+td{text-align:right;padding:16px;border-bottom:1px solid #1a2434;font-size:13px}
+tbody tr{cursor:pointer;transition:background .15s}
+tbody tr:hover{background:#182236}
+tbody tr:last-child td{border-bottom:0}
+.coin{display:flex;align-items:center;gap:11px;text-align:left}
+.coin img{width:30px;height:30px;border-radius:50%}
+.coin-name{font-weight:700}.symbol{color:var(--muted);font-size:11px;margin-top:3px;text-transform:uppercase}
+.up{color:var(--green)}.down{color:var(--red)}
+.message{text-align:center;color:var(--muted);padding:35px 15px}
+.small-btn,.period,.back{border:1px solid var(--line);background:#141d2c;color:var(--text);border-radius:9px;padding:9px 13px}
+.small-btn:hover,.period:hover,.back:hover{border-color:var(--blue)}
+.detail{display:none}
+.detail-top{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;flex-wrap:wrap;margin-bottom:22px}
+.detail-name{display:flex;align-items:center;gap:12px}
+.detail-name img{width:44px;height:44px}
+.detail-name h2{font-size:24px}
+.price{font-size:clamp(29px,5vw,42px);font-weight:800;letter-spacing:-1.5px;margin:22px 0 8px}
+.detail-change{font-size:14px}
+.chart-panel{padding:20px;margin-top:22px}
+.chart-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.periods{display:flex;gap:6px;flex-wrap:wrap}
+.period{padding:7px 10px;font-size:12px;color:var(--muted)}
+.period.active{background:#26375d;color:#fff;border-color:var(--blue)}
+.chart-area{height:310px;position:relative}
+.detail-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}
+.detail-stats .stat{padding:15px}
+.detail-stats .value{font-size:17px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:24px;border-top:1px solid var(--line)}
+.hidden{display:none!important}
+@media(max-width:600px){main{padding:25px 13px 40px}.top{padding:0 15px;height:62px}.brand{font-size:20px}.stats{gap:8px}.stat{padding:13px 10px}.value{font-size:17px}.label{font-size:10px}.detail-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.chart-panel{padding:13px}.chart-area{height:250px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">Coin<span>Pulse</span></div>
+  <div class="status"><span class="dot"></span><span id="connection">Connecting to market</span></div>
+</header>
+<main>
+  <section id="dashboard">
+    <h1>Crypto market, <span style="color:var(--blue)">in real time.</span></h1>
+    <p class="sub">Explore cryptocurrency prices and market movements.</p>
+    <div class="stats">
+      <div class="stat"><div class="label">ASSETS TRACKED</div><div class="value" id="assetCount">—</div></div>
+      <div class="stat"><div class="label">MARKET LEADER</div><div class="value" id="leader">—</div></div>
+      <div class="stat"><div class="label">BTC PRICE</div><div class="value" id="btcPrice">—</div></div>
+    </div>
+    <div class="section-head">
+      <h2>Cryptocurrency markets</h2>
+      <input class="search" id="search" type="search" placeholder="Search name or symbol..." aria-label="Search cryptocurrencies">
+    </div>
+    <div class="panel table-wrap">
+      <table>
+        <thead><tr><th>Asset</th><th>Price (USD)</th><th>24h change</th><th>Market cap</th><th>24h volume</th></tr></thead>
+        <tbody id="coinRows"><tr><td colspan="5" class="message">Loading real market data…</td></tr></tbody>
+      </table>
+      <div id="marketMessage" class="message hidden"></div>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:13px">Market data provided by CoinGecko. Select any asset to explore its price history.</p>
+  </section>
+
+  <section id="detail" class="detail">
+    <div class="detail-top">
+      <div>
+        <button class="back" id="backButton">← All markets</button>
+        <div class="detail-name" style="margin-top:22px"><img id="detailImage" alt=""><div><h2 id="detailTitle">Bitcoin</h2><div class="symbol" id="detailSymbol"></div></div></div>
+        <div class="price" id="detailPrice">—</div>
+        <div class="detail-change" id="detailChange"></div>
+      </div>
+      <button class="small-btn" id="refreshButton">↻ Refresh prices</button>
+    </div>
+    <div class="detail-stats">
+      <div class="stat"><div class="label">MARKET CAP</div><div class="value" id="detailCap">—</div></div>
+      <div class="stat"><div class="label">24H VOLUME</div><div class="value" id="detailVolume">—</div></div>
+      <div class="stat"><div class="label">CIRCULATING SUPPLY</div><div class="value" id="detailSupply">—</div></div>
+    </div>
+    <div class="panel chart-panel">
+      <div class="chart-head"><h2>Price history (USD)</h2><div class="periods" id="periods">
+        <button class="period active" data-days="1">1D</button>
+        <button class="period" data-days="7">7D</button>
+        <button class="period" data-days="30">1M</button>
+        <button class="period" data-days="90">3M</button>
+        <button class="period" data-days="365">1Y</button>
+        <button class="period" data-days="max">ALL</button>
+      </div></div>
+      <div class="chart-area"><canvas id="priceChart"></canvas></div>
+      <div id="chartMessage" class="message hidden"></div>
+    </div>
+  </section>
+</main>
+<footer>CoinPulse · Independent market information · Not financial advice</footer>
+
+<script>
+const API = "https://api.coingecko.com/api/v3";
+const $ = id => document.getElementById(id);
+let coins = [];
+let selectedCoin = null;
+let chart = null;
+let selectedDays = "1";
+let marketBusy = false;
+let chartRequest = 0;
+let refreshTimer = null;
+
+const money = n => {
+  if (n === null || n === undefined || !Number.isFinite(Number(n))) return "—";
+  return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:Number(n)<1?6:2}).format(Number(n));
+};
+const compact = n => {
+  if (n === null || n === undefined || !Number.isFinite(Number(n))) return "—";
+  return new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:2}).format(Number(n));
+};
+const number = n => n == null || !Number.isFinite(Number(n)) ? "—" : new Intl.NumberFormat("en-US",{maximumFractionDigits:2}).format(Number(n));
+const pct = n => n == null || !Number.isFinite(Number(n)) ? "—" : `${Number(n)>0?"+":""}${Number(n).toFixed(2)}%`;
+const safe = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+async function getJSON(url){
+  const response = await fetch(url);
+  if(!response.ok) throw new Error(response.status===429?"Market data is temporarily rate-limited. Please wait a little and try again.":`Market data request failed (${response.status}).`);
+  return response.json();
+}
+
+function renderRows(){
+  const query = $("search").value.trim().toLowerCase();
+  const visible = coins.filter(c=>c.name.toLowerCase().includes(query)||c.symbol.toLowerCase().includes(query));
+  $("assetCount").textContent = coins.length ? coins.length : "—";
+  const btc = coins.find(c=>c.id==="bitcoin");
+  $("btcPrice").textContent = btc ? money(btc.current_price) : "—";
+  $("leader").textContent = coins.length ? coins[0].symbol.toUpperCase() : "—";
+  $("coinRows").innerHTML = visible.length ? visible.map(c=>`
+    <tr data-id="${safe(c.id)}" tabindex="0" aria-label="Open ${safe(c.name)} details">
+      <td><div class="coin"><img src="${safe(c.image)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><div><div class="coin-name">${safe(c.name)}</div><div class="symbol">${safe(c.symbol)}</div></div></div></td>
+      <td>${money(c.current_price)}</td>
+      <td class="${Number(c.price_change_percentage_24h)>=0?'up':'down'}">${pct(c.price_change_percentage_24h)}</td>
+      <td>${c.market_cap==null?'—':'$'+compact(c.market_cap)}</td>
+      <td>${c.total_volume==null?'—':'$'+compact(c.total_volume)}</td>
+    </tr>`).join("") : `<tr><td colspan="5" class="message">No matching cryptocurrencies found.</td></tr>`;
+  $("coinRows").querySelectorAll("tr[data-id]").forEach(row=>{
+    row.addEventListener("click",()=>openCoin(row.dataset.id));
+    row.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openCoin(row.dataset.id)}});
+  });
+}
+
+async function loadMarkets(){
+  if(marketBusy) return;
+  marketBusy = true;
+  try{
+    const data = await getJSON(`${API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h`);
+    if(!Array.isArray(data)) throw new Error("Unexpected market data response.");
+    coins = data;
+    renderRows();
+    $("connection").textContent = "Market connected";
+    $("connection").style.color = "var(--green)";
+    if(selectedCoin){
+      const fresh = coins.find(c=>c.id===selectedCoin.id);
+      if(fresh){selectedCoin=fresh;renderDetail()}
+    }
+    $("marketMessage").classList.add("hidden");
+  }catch(err){
+    $("connection").textContent = "Market unavailable";
+    $("connection").style.color = "var(--red)";
+    if(!coins.length){
+      $("coinRows").innerHTML = "";
+      $("marketMessage").textContent = `${err.message} Check your internet connection or try again later.`;
+      $("marketMessage").classList.remove("hidden");
+    }
+  }finally{marketBusy=false}
+}
+
+function renderDetail(){
+  if(!selectedCoin) return;
+  const c=selectedCoin;
+  $("detailImage").src=c.image||"";
+  $("detailTitle").textContent=c.name;
+  $("detailSymbol").textContent=c.symbol.toUpperCase();
+  $("detailPrice").textContent=money(c.current_price);
+  $("detailChange").textContent=`${pct(c.price_change_percentage_24h)} over 24 hours`;
+  $("detailChange").className="detail-change "+(Number(c.price_change_percentage_24h)>=0?"up":"down");
+  $("detailCap").textContent=c.market_cap==null?"—":"$"+compact(c.market_cap);
+  $("detailVolume").textContent=c.total_volume==null?"—":"$"+compact(c.total_volume);
+  $("detailSupply").textContent=c.circulating_supply==null?"—":number(c.circulating_supply)+" "+c.symbol.toUpperCase();
+}
+
+async function openCoin(id){
+  const coin=coins.find(c=>c.id===id);
+  if(!coin) return;
+  selectedCoin=coin;
+  selectedDays="1";
+  $("periods").querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.days==="1"));
+  $("dashboard").classList.add("hidden");
+  $("detail").style.display="block";
+  renderDetail();
+  window.scrollTo({top:0,behavior:"smooth"});
+  await loadChart("1");
+}
+
+function closeDetail(){
+  selectedCoin=null;
+  chartRequest++;
+  $("detail").style.display="none";
+  $("dashboard").classList.remove("hidden");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function loadChart(days){
+  if(!selectedCoin) return;
+  const coinId=selectedCoin.id;
+  const request=++chartRequest;
+  selectedDays=String(days);
+  $("chartMessage").classList.add("hidden");
+  $("chartMessage").textContent="";
+  $("periods").querySelectorAll("button").forEach(b=>b.classList.toggle("active",b.dataset.days===selectedDays));
+  try{
+    const interval=days==="1"?"&interval=minutely":days==="max"?"":"&interval=daily";
+    const data=await getJSON(`${API}/coins/${encodeURIComponent(coinId)}/market_chart?vs_currency=usd&days=${encodeURIComponent(days)}${interval}`);
+    if(request!==chartRequest||!selectedCoin||selectedCoin.id!==coinId)return;
+    if(!Array.isArray(data.prices)||!data.prices.length) throw new Error("No historical price data is available for this period.");
+    const labels=data.prices.map(p=>{
+      const d=new Date(p[0]);
+      return days==="1"?d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):d.toLocaleDateString([],{month:"short",day:"numeric",year:days==="max"?"2-digit":undefined});
+    });
+    const values=data.prices.map(p=>p[1]);
+    if(chart) chart.destroy();
+    chart=new Chart($("priceChart"),{
+      type:"line",
+      data:{labels,datasets:[{data:values,borderColor:"#6688ff",borderWidth:2,pointRadius:0,pointHoverRadius:4,fill:true,backgroundColor:ctx=>{
+        const g=ctx.chart.ctx.createLinearGradient(0,0,0,300);
+        g.addColorStop(0,"rgba(102,136,255,.23)");g.addColorStop(1,"rgba(102,136,255,0)");
+        return g;
+      },tension:.18}]},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:"index"},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>money(c.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{color:"#8c9bb0",maxTicksLimit:6,maxRotation:0},border:{display:false}},y:{grid:{color:"rgba(140,155,176,.12)"},ticks:{color:"#8c9bb0",callback:v=>money(v)},border:{display:false}}}}
+    });
+  }catch(err){
+    if(request!==chartRequest)return;
+    if(chart){chart.destroy();chart=null}
+    $("chartMessage").textContent=err.message;
+    $("chartMessage").classList.remove("hidden");
+  }
+}
+
+$("search").addEventListener("input",renderRows);
+$("backButton").addEventListener("click",closeDetail);
+$("refreshButton").addEventListener("click",async()=>{
+  $("refreshButton").textContent="Refreshing…";
+  await loadMarkets();
+  $("refreshButton").textContent="↻ Refresh prices";
+  if(selectedCoin) await loadChart(selectedDays);
+});
+$("periods").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>loadChart(b.dataset.days)));
+
+loadMarkets();
+refreshTimer=setInterval(loadMarkets,30000);
+window.addEventListener("beforeunload",()=>{if(refreshTimer)clearInterval(refreshTimer);if(chart)chart.destroy()});
+</script>
+</body>
+</html>
