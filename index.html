@@ -1,1107 +1,459 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#090817">
-<title>CoinPulse — Crypto Market Intelligence & Pro Trading Platform</title>
-<meta name="description" content="Track cryptocurrency prices, explore market movements, view interactive charts, simulate trades, monitor P&L and manage your crypto portfolio with CoinPulse.">
-
-<link rel="preconnect" href="https://api.coingecko.com">
-<link rel="preconnect" href="https://unpkg.com">
-<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
-
-<style>
-:root {
-  --bg:#090817;
-  --panel:#111027;
-  --panel2:#171531;
-  --line:rgba(164,150,255,.14);
-  --purple:#8b5cf6;
-  --blue:#39a7ff;
-  --text:#f4f2ff;
-  --muted:#9290b3;
-  --green:#37e3a0;
-  --red:#ff6487;
-  --radius:18px;
-}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{
-  margin:0;background:
-  radial-gradient(ellipse at 15% -10%,rgba(111,61,235,.20),transparent 38%),
-  radial-gradient(ellipse at 100% 10%,rgba(38,127,255,.11),transparent 30%),
-  var(--bg);
-  color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,
-  BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh
-}
-button,input,select,textarea{font:inherit}
-button{cursor:pointer}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
-  outline:2px solid var(--blue);outline-offset:3px
-}
-button:disabled{opacity:.45;cursor:not-allowed}
-a{color:inherit;text-decoration:none}
-.app{min-height:100vh;display:flex;flex-direction:column}
-.topbar{
-  position:sticky;top:0;z-index:20;display:flex;align-items:center;
-  justify-content:space-between;gap:16px;padding:15px 5%;
-  border-bottom:1px solid var(--line);background:rgba(9,8,23,.88);
-  backdrop-filter:blur(20px)
-}
-.brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:850;letter-spacing:-.8px}
-.brand-mark{
-  width:37px;height:37px;border-radius:12px;display:grid;place-items:center;
-  background:linear-gradient(135deg,var(--purple),var(--blue));
-  box-shadow:0 0 25px #8156ff3b;font-size:19px
-}
-.brand span span{color:#8c79ff}
-.top-actions{display:flex;align-items:center;gap:10px}
-.status{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
-.dot{height:7px;width:7px;border-radius:50%;background:var(--green);display:inline-block}
-.btn{
-  border:1px solid var(--line);border-radius:12px;padding:10px 14px;
-  background:var(--panel2);color:var(--text);font-weight:650;
-  transition:transform .15s,border-color .15s
-}
-.btn:hover{border-color:#8b5cf6a8;transform:translateY(-1px)}
-.btn.primary{background:linear-gradient(110deg,#7848ed,#347ff1);border:0}
-.btn.small{padding:7px 10px;font-size:12px}
-.layout{display:grid;grid-template-columns:220px minmax(0,1fr);max-width:1600px;margin:auto;width:100%;flex:1}
-.sidebar{
-  position:sticky;top:72px;height:calc(100vh - 72px);padding:26px 15px;
-  border-right:1px solid var(--line);display:flex;flex-direction:column;gap:8px;overflow-y:auto
-}
-.nav-label{font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:#777494;padding:12px 13px 7px}
-.nav-btn{
-  width:100%;display:flex;align-items:center;gap:12px;padding:12px 13px;
-  border:1px solid transparent;border-radius:12px;color:var(--muted);
-  background:transparent;text-align:left;font-weight:650
-}
-.nav-btn .nav-icon{width:21px;text-align:center;font-size:17px}
-.nav-btn:hover,.nav-btn.active{
-  color:#fff;background:linear-gradient(100deg,#7951ed25,#3199ff12);
-  border-color:#9277ff2b
-}
-.sidebar-bottom{margin-top:auto;border:1px solid var(--line);background:var(--panel);border-radius:15px;padding:15px}
-.sidebar-bottom p{color:var(--muted);font-size:12px;line-height:1.6;margin:7px 0 12px}
-main{min-width:0;padding:30px clamp(16px,3.5vw,48px) 80px}
-.page{display:none}
-.page.active{display:block}
-.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:1.8px;color:#a69bff;font-weight:750}
-h1{font-size:clamp(26px,3vw,38px);letter-spacing:-1.5px;line-height:1.15;margin:9px 0}
-h2{font-size:19px;letter-spacing:-.5px;margin:0}
-h3{font-size:15px;margin:0}
-.sub{color:var(--muted);font-size:13px;line-height:1.65}
-.heading-row{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;margin-bottom:23px}
-.heading-row .sub{margin:8px 0 0}
-.hero{
-  position:relative;overflow:hidden;border:1px solid #9578ff30;
-  border-radius:24px;padding:30px;margin-bottom:24px;
-  background:linear-gradient(115deg,#24164d 0%,#171638 53%,#10294b 100%)
-}
-.hero:after{
-  content:"";position:absolute;width:260px;height:260px;right:-70px;top:-110px;
-  border-radius:50%;background:#7050ff32;filter:blur(10px);pointer-events:none
-}
-.hero-content{position:relative;z-index:1;max-width:560px}
-.hero h1{font-size:clamp(29px,4vw,45px)}
-.gradient-text{background:linear-gradient(100deg,#c5a7ff,#6ec7ff);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero .sub{max-width:480px}
-.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
-.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:26px}
-.stat-card,.card{
-  border:1px solid var(--line);border-radius:var(--radius);
-  background:linear-gradient(145deg,#15132d,#100f23)
-}
-.stat-card{padding:19px;min-width:0}
-.stat-label{color:var(--muted);font-size:12px;display:flex;align-items:center;gap:7px}
-.stat-value{font-size:clamp(18px,2vw,25px);font-weight:800;letter-spacing:-.7px;margin:12px 0 7px;overflow-wrap:anywhere}
-.stat-foot{font-size:11px;color:var(--muted)}
-.positive{color:var(--green)!important}
-.negative{color:var(--red)!important}
-.section{margin-top:30px}
-.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
-.text-btn{border:0;background:transparent;color:#a99aff;font-size:12px;font-weight:700;padding:8px}
-.text-btn:hover{color:#fff}
-.coin-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
-.coin-card{
-  min-width:0;text-align:left;padding:16px;border:1px solid var(--line);
-  border-radius:16px;background:#121127;color:var(--text);transition:.2s
-}
-.coin-card:hover{border-color:#8b5cf6a0;transform:translateY(-2px)}
-.coin-top{display:flex;align-items:center;justify-content:space-between;gap:5px}
-.coin-icon{width:34px;height:34px;border-radius:50%;object-fit:contain;background:#ffffff0c}
-.coin-symbol{color:var(--muted);font-size:11px;font-weight:750}
-.coin-name{font-size:12px;color:var(--muted);margin-top:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.coin-price{font-size:17px;font-weight:800;letter-spacing:-.5px;margin:6px 0}
-.star{
-  border:0;background:transparent;color:#65617f;padding:3px;font-size:19px;
-  line-height:1
-}
-.star.on{color:#ffd66e}
-.table-card{overflow:hidden}
-.table-toolbar{padding:17px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
-.search-wrap{position:relative;flex:1;min-width:170px}
-.search-wrap input{
-  width:100%;border:1px solid var(--line);border-radius:11px;background:#0c0b1d;
-  color:var(--text);padding:11px 13px 11px 36px
-}
-.search-symbol{position:absolute;left:12px;top:9px;color:var(--muted)}
-.filters{display:flex;gap:6px;flex-wrap:wrap}
-.filter-btn,.period-btn{
-  padding:8px 12px;border:1px solid transparent;border-radius:9px;
-  color:var(--muted);background:transparent;font-size:12px;font-weight:700
-}
-.filter-btn.active,.period-btn.active{color:#fff;background:#8056f52c;border-color:#8b5cf65c}
-.table-scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;white-space:nowrap}
-th{text-align:right;padding:14px 17px;color:#7f7b9f;font-size:10px;text-transform:uppercase;letter-spacing:.7px;font-weight:750}
-th:first-child,td:first-child{text-align:left}
-td{text-align:right;padding:15px 17px;border-top:1px solid #ffffff08;font-size:13px}
-tbody tr{cursor:pointer;transition:background .15s}
-tbody tr:hover{background:#ffffff06}
-.coin-cell{display:flex;align-items:center;gap:11px;min-width:175px}
-.coin-cell img{width:30px;height:30px;border-radius:50%;object-fit:contain}
-.coin-title{font-weight:750;font-size:13px}
-.coin-sub{color:var(--muted);font-size:11px;margin-top:3px}
-.muted{color:var(--muted)}
-.table-number{font-variant-numeric:tabular-nums}
-.empty-state{padding:34px 20px;text-align:center;color:var(--muted);font-size:13px}
-.loading-line{height:3px;background:#ffffff0b;overflow:hidden}
-.loading-line:after{content:"";display:block;width:35%;height:100%;background:linear-gradient(90deg,var(--purple),var(--blue));animation:loading 1.2s infinite ease-in-out}
-@keyframes loading{from{transform:translateX(-120%)}to{transform:translateX(350%)}}
-.notice{padding:12px 14px;border:1px solid #8b5cf63a;background:#8b5cf610;color:#bcb4ff;border-radius:12px;font-size:12px;line-height:1.6;margin:15px 0}
-.error-notice{border-color:#ff648750;background:#ff64870d;color:#ff9bb0}
-.portfolio-form{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;margin:18px 0}
-.field{display:flex;flex-direction:column;gap:7px;min-width:0}
-.field label{font-size:11px;color:var(--muted)}
-.field input,.field select,.modal-input{
-  width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;
-  color:var(--text);background:#0c0b1d;min-width:0
-}
-.field select option{background:#111027}
-.portfolio-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
-.portfolio-summary .stat-card{padding:17px}
-.portfolio-summary .stat-value{font-size:22px}
-.profile-card{padding:25px;display:flex;align-items:center;gap:17px;margin:20px 0;flex-wrap:wrap}
-.avatar{width:60px;height:60px;border-radius:20px;display:grid;place-items:center;font-size:25px;background:linear-gradient(135deg,#8153f2,#258fe9)}
-.feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-.feature-card{padding:20px}
-.feature-card .feature-icon{font-size:23px;margin-bottom:13px}
-.feature-card p{font-size:12px;color:var(--muted);line-height:1.65}
-.footer{color:#6f6b8c;text-align:center;font-size:12px;margin-top:45px;line-height:1.9;border-top:1px solid var(--line);padding-top:25px}
-.footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:12px}
-.footer-links a{color:#a99aff;font-weight:600;font-size:12px}
-.footer-links a:hover{color:#fff;text-decoration:underline}
-.mobile-nav{display:none}
-
-/* Floating AI Assistant & Notifications */
-.ai-fab{
-  position:fixed;bottom:25px;right:25px;z-index:40;width:56px;height:56px;border-radius:50%;
-  background:linear-gradient(135deg,var(--purple),var(--blue));border:0;color:#fff;font-size:24px;
-  box-shadow:0 8px 30px rgba(139,92,246,0.4);display:grid;place-items:center;transition:.2s
-}
-.ai-fab:hover{transform:scale(1.08)}
-.ai-modal{
-  position:fixed;bottom:95px;right:25px;z-index:45;width:360px;max-width:92vw;height:480px;max-height:80vh;
-  background:#100f24;border:1px solid #9b83ff40;border-radius:20px;box-shadow:0 15px 50px rgba(0,0,0,0.6);
-  display:none;flex-direction:column;overflow:hidden
-}
-.ai-modal.open{display:flex}
-.ai-header{padding:15px;background:#171531;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
-.ai-body{flex:1;padding:15px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;font-size:13px}
-.ai-msg{padding:10px 14px;border-radius:12px;max-width:85%;line-height:1.5}
-.ai-msg.bot{background:#171531;border:1px solid var(--line);align-self:flex-start;color:var(--text)}
-.ai-msg.user{background:linear-gradient(135deg,var(--purple),var(--blue));align-self:flex-end;color:#fff}
-.ai-footer{padding:12px;border-top:1px solid var(--line);display:flex;gap:8px;background:#0c0b1d}
-.ai-footer input{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:#111027;color:var(--text);font-size:13px}
-
-/* Notification Badge */
-.notif-btn{position:relative;background:var(--panel2);border:1px solid var(--line);padding:8px 12px;border-radius:12px;color:var(--text);font-size:16px}
-.notif-badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;font-size:9px;font-weight:800;width:16px;height:16px;border-radius:50%;display:grid;place-items:center}
-
-.modal-backdrop{
-  display:none;position:fixed;inset:0;z-index:50;background:#05040de8;
-  backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:15px
-}
-.modal-backdrop.open{display:flex}
-.modal{
-  width:min(900px,100%);max-height:92vh;overflow:auto;background:#100f24;
-  border:1px solid #9b83ff36;border-radius:22px;box-shadow:0 25px 100px #0009
-}
-.modal-head{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:20px 23px;border-bottom:1px solid var(--line)}
-.modal-body{padding:22px}
-.close-btn{border:1px solid var(--line);background:#ffffff08;color:#fff;border-radius:10px;width:36px;height:36px;font-size:20px}
-.detail-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.detail-top img{width:44px;height:44px;border-radius:50%}
-.detail-price{font-size:clamp(27px,5vw,39px);font-weight:850;letter-spacing:-1px;margin:18px 0 5px}
-.detail-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}
-.detail-stat{padding:13px;border-radius:12px;background:#ffffff05;border:1px solid var(--line)}
-.detail-stat .stat-label{font-size:10px}
-.detail-stat strong{display:block;margin-top:8px;font-size:14px;overflow-wrap:anywhere}
-.chart-periods{display:flex;gap:4px;flex-wrap:wrap;margin:20px 0 12px}
-#chart{height:350px;min-height:260px;width:100%;position:relative}
-.chart-message{display:grid;place-items:center;height:100%;min-height:200px;color:var(--muted);text-align:center;font-size:13px;padding:20px}
-.modal-foot{padding:0 22px 20px;color:var(--muted);font-size:11px;line-height:1.6}
-.toast{
-  position:fixed;z-index:100;bottom:85px;left:50%;transform:translateX(-50%);
-  max-width:90%;padding:12px 17px;border-radius:12px;background:#242044;
-  border:1px solid #9278ff66;box-shadow:0 12px 35px #0008;color:#fff;
-  font-size:12px;display:none;text-align:center
-}
-.toast.show{display:block}
-@media(max-width:1050px){
-  .layout{grid-template-columns:185px minmax(0,1fr)}
-  .coin-strip{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .coin-card:nth-child(n+4){display:none}
-  .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-@media(max-width:700px){
-  .topbar{padding:12px 15px}
-  .brand{font-size:19px}
-  .status{display:none}
-  .top-actions{gap:7px}
-  .top-actions .btn{padding:9px 10px;font-size:12px}
-  .layout{display:block}
-  .sidebar{display:none}
-  main{padding:22px 14px 100px}
-  .hero{padding:23px 19px;border-radius:20px}
-  .stats-grid{gap:9px}
-  .stat-card{padding:14px}
-  .stat-value{font-size:21px}
-  .coin-strip{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-  .coin-card:nth-child(n+3){display:none}
-  .feature-grid{grid-template-columns:1fr}
-  .portfolio-form{grid-template-columns:1fr}
-  .portfolio-summary{gap:8px}
-  .portfolio-summary .stat-card{padding:12px}
-  .portfolio-summary .stat-value{font-size:17px}
-  .mobile-nav{
-    position:fixed;bottom:0;left:0;right:0;z-index:30;display:grid;
-    grid-template-columns:repeat(6,1fr);padding:8px 2px calc(8px + env(safe-area-inset-bottom));
-    border-top:1px solid var(--line);background:rgba(10,9,26,.96);backdrop-filter:blur(18px)
-  }
-  .mobile-nav .nav-btn{display:flex;flex-direction:column;gap:3px;justify-content:center;align-items:center;padding:7px 1px;font-size:9px;text-align:center}
-  .mobile-nav .nav-icon{font-size:16px}
-  .modal-backdrop{padding:0;align-items:flex-end}
-  .modal{max-height:94vh;border-radius:22px 22px 0 0;border-bottom:0}
-  .modal-body{padding:17px}
-  .modal-head{padding:15px 17px}
-  #chart{height:290px;min-height:250px}
-  .detail-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .table-toolbar{padding:12px}
-  th,td{padding:13px 12px}
-}
-</style>
-</head>
-
-<body>
-<div class="app">
-  <header class="topbar">
-    <a class="brand" href="#" aria-label="CoinPulse home" onclick="navigate('home');return false">
-      <span class="brand-mark">ϟ</span>
-      <span>Coin<span>Pulse</span></span>
-    </a>
-    <div class="top-actions">
-      <div class="status"><span class="dot" id="statusDot"></span><span id="connectionStatus">Connecting to market...</span></div>
-      <button class="notif-btn" onclick="openNotificationsModal()" title="Notifications">🔔<span class="notif-badge" id="notifCount">2</span></button>
-      <button class="btn small" id="refreshButton" onclick="loadMarkets(true)">↻ Refresh</button>
-      <button class="btn primary small" onclick="openAccountModal()">Sign in</button>
-    </div>
-  </header>
-
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="nav-label">Workspace</div>
-      <button class="nav-btn active" data-page="home" onclick="navigate('home')"><span class="nav-icon">⌂</span>Home</button>
-      <button class="nav-btn" data-page="markets" onclick="navigate('markets')"><span class="nav-icon">◈</span>Markets</button>
-      <button class="nav-btn" data-page="trade" onclick="navigate('trade')"><span class="nav-icon">⚡</span>Trade & Demo</button>
-      <button class="nav-btn" data-page="assets" onclick="navigate('assets')"><span class="nav-icon">▤</span>Portfolio & P&L</button>
-      <button class="nav-btn" data-page="leaderboard" onclick="navigate('leaderboard')"><span class="nav-icon">🏆</span>Leaderboard</button>
-      <button class="nav-btn" data-page="referral" onclick="navigate('referral')"><span class="nav-icon">🎁</span>Referral</button>
-      <button class="nav-btn" data-page="support" onclick="navigate('support')"><span class="nav-icon">✉</span>Support</button>
-      <button class="nav-btn" data-page="profile" onclick="navigate('profile')"><span class="nav-icon">◎</span>Profile</button>
-      
-      <div class="sidebar-bottom">
-        <div class="eyebrow">Community</div>
-        <p style="margin-bottom:8px">Connect with traders worldwide.</p>
-        <div style="display:flex;gap:6px">
-          <button class="btn small" style="flex:1" onclick="window.open('#','_blank')">Discord</button>
-          <button class="btn small" style="flex:1" onclick="window.open('#','_blank')">X / Twitter</button>
-        </div>
-      </div>
-    </aside>
-
-    <main>
-      <!-- HOME PAGE -->
-      <section class="page active" id="page-home">
-        <div class="hero">
-          <div class="hero-content">
-            <div class="eyebrow">Your crypto, in focus</div>
-            <h1>See the market.<br><span class="gradient-text">Find your next move.</span></h1>
-            <p class="sub">Explore live cryptocurrency prices, follow market movements, simulate demo trades, track cost basis P&L, and convert tokens instantly.</p>
-            <div class="hero-actions">
-              <button class="btn primary" onclick="navigate('markets')">Explore markets ↗</button>
-              <button class="btn" onclick="navigate('trade')">Try demo trading</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-label">🌐 Global market cap</div>
-            <div class="stat-value" id="globalCap">—</div>
-            <div class="stat-foot" id="globalCapChange">Awaiting market data</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">₿ BTC dominance</div>
-            <div class="stat-value" id="btcDominance">—</div>
-            <div class="stat-foot">Share of global crypto market cap</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">📊 24h trading volume</div>
-            <div class="stat-value" id="globalVolume">—</div>
-            <div class="stat-foot">Global reported volume</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">◈ Coins loaded</div>
-            <div class="stat-value" id="coinCount">—</div>
-            <div class="stat-foot">Ranked assets from market data</div>
-          </div>
-        </div>
-
-        <!-- Quick Converter Widget -->
-        <div class="card" style="padding:22px;margin-bottom:30px">
-          <h2>⚡ Instant Crypto Converter</h2>
-          <p class="sub">Quickly calculate valuations based on live market prices.</p>
-          <div style="display:grid;grid-template-columns:1fr auto 1fr auto;gap:10px;align-items:center;margin-top:15px">
-            <div class="field"><label>Amount</label><input type="number" id="convertAmount" value="1" min="0.0001" step="any" oninput="calculateConversion()"></div>
-            <div class="field"><label>From</label><select id="convertFrom" onchange="calculateConversion()"><option value="btc">Bitcoin (BTC)</option><option value="eth">Ethereum (ETH)</option><option value="usdt">Tether (USDT)</option></select></div>
-            <div style="text-align:center;font-size:20px;padding-top:18px">⇄</div>
-            <div class="field"><label>Estimated Value (USD)</label><input type="text" id="convertResult" readonly style="font-weight:700;color:var(--green)"></div>
-          </div>
-        </div>
-
-        <div id="homeError" class="notice error-notice" hidden></div>
-
-        <div class="section">
-          <div class="section-head"><h2>Featured assets</h2><button class="text-btn" onclick="navigate('markets')">View all markets →</button></div>
-          <div class="coin-strip" id="featuredCoins">
-            <div class="card" style="padding:20px"><div class="loading-line"></div><p class="sub">Loading market prices...</p></div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-head"><h2>Market overview</h2><button class="text-btn" onclick="navigate('markets')">Explore →</button></div>
-          <div class="card table-card">
-            <div class="table-scroll">
-              <table>
-                <thead><tr><th>Asset</th><th>Price</th><th>24h change</th><th>Market cap</th><th>Action</th></tr></thead>
-                <tbody id="homeMarketRows"><tr><td colspan="5"><div class="empty-state">Connecting to market data...</div></td></tr></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- MARKETS PAGE -->
-      <section class="page" id="page-markets">
-        <div class="heading-row">
-          <div><div class="eyebrow">Explore the market</div><h1>Crypto markets</h1><p class="sub">Search ranked cryptocurrencies, sort by category sectors, and execute quick demo trades.</p></div>
-          <button class="btn" onclick="loadMarkets(true)">↻ Refresh data</button>
-        </div>
-        <div id="marketError" class="notice error-notice" hidden></div>
-        <div class="card table-card">
-          <div class="table-toolbar">
-            <div class="search-wrap"><span class="search-symbol">⌕</span><input id="coinSearch" type="search" placeholder="Search name or symbol..." autocomplete="off" aria-label="Search cryptocurrencies"></div>
-            <div class="filters">
-              <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All</button>
-              <button class="filter-btn" data-filter="gainers" onclick="setFilter('gainers')">Gainers</button>
-              <button class="filter-btn" data-filter="losers" onclick="setFilter('losers')">Losers</button>
-              <button class="filter-btn" data-filter="favorites" onclick="setFilter('favorites')">★ Favorites</button>
-              <button class="filter-btn" data-filter="defi" onclick="setFilter('defi')">DeFi</button>
-              <button class="filter-btn" data-filter="layer1" onclick="setFilter('layer1')">Layer 1</button>
-            </div>
-          </div>
-          <div class="table-scroll">
-            <table>
-              <thead><tr><th># / Asset</th><th>Price</th><th>24h change</th><th>Market cap</th><th>24h volume</th><th>★</th><th>Quick Trade</th></tr></thead>
-              <tbody id="marketRows"><tr><td colspan="7"><div class="empty-state">Loading live market data...</div></td></tr></tbody>
-            </table>
-          </div>
-          <div class="loading-line" id="marketLoading"></div>
-          <div class="sub" style="padding:13px 17px">Showing up to 100 ranked assets.</div>
-        </div>
-      </section>
-
-      <!-- TRADE & DEMO PAGE -->
-      <section class="page" id="page-trade">
-        <div class="heading-row">
-          <div><div class="eyebrow">Simulation Mode</div><h1>Trading & Demo Balance</h1><p class="sub">Test strategies with a $10,000 demo balance. Execute paper buy/sell orders and review order history.</p></div>
-        </div>
-        
-        <div class="portfolio-summary" style="margin-bottom:24px">
-          <div class="stat-card"><div class="stat-label">💵 Demo cash balance</div><div class="stat-value" id="demoBalance">$10,000.00</div><div class="stat-foot"><button class="text-btn" style="padding:0" onclick="openDepositModal()">+ Deposit / Withdraw Funds</button></div></div>
-          <div class="stat-card"><div class="stat-label">📈 Open positions value</div><div class="stat-value" id="demoPositionsValue">$0.00</div><div class="stat-foot">Current valuation</div></div>
-          <div class="stat-card"><div class="stat-label">📊 Unrealized P&L</div><div class="stat-value" id="demoPnl">$0.00</div><div class="stat-foot">Performance metric</div></div>
-        </div>
-
-        <div class="card" style="padding:22px;margin-bottom:24px">
-          <h2>Place Demo Order</h2>
-          <p class="sub">Select an asset, specify quantity, and execute a simulated order.</p>
-          <div class="portfolio-form" style="grid-template-columns:1fr 1fr auto">
-            <div class="field"><label for="tradeCoin">Cryptocurrency</label><select id="tradeCoin"><option value="">Load coins first...</option></select></div>
-            <div class="field"><label for="tradeAmount">Order Quantity</label><input id="tradeAmount" type="number" min="0.00000001" step="any" placeholder="e.g. 0.5"></div>
-            <div style="display:flex;gap:8px;align-self:end">
-              <button class="btn primary" onclick="executeTrade('BUY')">Buy</button>
-              <button class="btn" style="background:#ff648722;border-color:#ff648755;color:#ff9bb0" onclick="executeTrade('SELL')">Sell</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
-          <h2>Transaction & Order History</h2>
-          <div class="card table-card" style="margin-top:12px">
-            <div class="table-scroll">
-              <table>
-                <thead><tr><th>Time</th><th>Type</th><th>Asset</th><th>Quantity</th><th>Price</th><th>Total Cost</th></tr></thead>
-                <tbody id="tradeHistoryRows"><tr><td colspan="6"><div class="empty-state">No demo transactions executed yet.</div></td></tr></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- PORTFOLIO & P&L PAGE -->
-      <section class="page" id="page-assets">
-        <div class="heading-row">
-          <div><div class="eyebrow">Your personal tracker</div><h1>Portfolio & Cost Basis P&L</h1><p class="sub">Record coin quantities, average purchase cost, and monitor live profit/loss returns.</p></div>
-        </div>
-        <div class="portfolio-summary">
-          <div class="stat-card"><div class="stat-label">Estimated portfolio value</div><div class="stat-value" id="portfolioValue">$0.00</div><div class="stat-foot">Using live market prices</div></div>
-          <div class="stat-card"><div class="stat-label">Total Cost Basis</div><div class="stat-value" id="portfolioCostBasis">$0.00</div><div class="stat-foot">Total invested amount</div></div>
-          <div class="stat-card"><div class="stat-label">Total Profit / Loss</div><div class="stat-value" id="portfolioTotalPnl">$0.00</div><div class="stat-foot">Overall return</div></div>
-        </div>
-        <div class="section card" style="padding:20px">
-          <h2>Add holding with cost basis</h2>
-          <p class="sub">Enter coin, quantity owned, and average purchase price per coin.</p>
-          <form class="portfolio-form" id="holdingForm">
-            <div class="field"><label for="holdingCoin">Cryptocurrency</label><select id="holdingCoin" required><option value="">Load coins first...</option></select></div>
-            <div class="field"><label for="holdingAmount">Quantity owned</label><input id="holdingAmount" type="number" min="0.00000001" step="any" placeholder="e.g. 0.5" required></div>
-            <div class="field"><label for="holdingCost">Avg Purchase Price ($)</label><input id="holdingCost" type="number" min="0" step="any" placeholder="e.g. 62000" required></div>
-            <button class="btn primary" type="submit" style="align-self:end">+ Add holding</button>
-          </form>
-        </div>
-        <div class="section">
-          <div class="section-head"><h2>Your holdings</h2><button class="text-btn" onclick="renderPortfolio()">Recalculate</button></div>
-          <div class="card table-card"><div class="table-scroll"><table>
-            <thead><tr><th>Asset</th><th>Quantity</th><th>Avg Cost</th><th>Current Price</th><th>Estimated Value</th><th>Profit / Loss</th><th>Action</th></tr></thead>
-            <tbody id="portfolioRows"><tr><td colspan="7"><div class="empty-state">No holdings yet. Add your first coin above.</div></td></tr></tbody>
-          </table></div></div>
-        </div>
-      </section>
-
-      <!-- LEADERBOARD PAGE -->
-      <section class="page" id="page-leaderboard">
-        <div class="heading-row">
-          <div><div class="eyebrow">Community Competition</div><h1>Paper Trading Leaderboard</h1><p class="sub">Top demo traders ranked by simulated return percentages this week.</p></div>
-        </div>
-        <div class="card table-card">
-          <div class="table-scroll">
-            <table>
-              <thead><tr><th>Rank</th><th>Trader</th><th>Simulated Portfolio</th><th>24h Return</th><th>Tier</th></tr></thead>
-              <tbody>
-                <tr><td>🥇 1</td><td>CryptoWhale99</td><td>$24,850.00</td><td class="positive">+148.5%</td><td>Diamond</td></tr>
-                <tr><td>🥈 2</td><td>SatoshiPulse</td><td>$18,420.50</td><td class="positive">+84.2%</td><td>Platinum</td></tr>
-                <tr><td>🥉 3</td><td>AlphaTraderX</td><td>$14,310.00</td><td class="positive">+43.1%</td><td>Gold</td></tr>
-                <tr><td>4</td><td>EtherKnight</td><td>$11,920.10</td><td class="positive">+19.2%</td><td>Silver</td></tr>
-                <tr><td>5</td><td>You (Guest Trader)</td><td id="leaderboardUserVal">$10,000.00</td><td id="leaderboardUserRet" class="muted">0.0%</td><td>Bronze</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- REFERRAL PROGRAM PAGE -->
-      <section class="page" id="page-referral">
-        <div class="heading-row">
-          <div><div class="eyebrow">Earn Rewards</div><h1>Referral Program</h1><p class="sub">Invite your friends to CoinPulse and earn demo tier rewards and platform perks.</p></div>
-        </div>
-        <div class="card profile-card">
-          <div class="avatar">🎁</div>
-          <div style="flex:1">
-            <h2>Your Unique Referral Link</h2>
-            <p class="sub" id="referralLinkText">https://coinpulse.io/ref/CP-9482-USER</p>
-          </div>
-          <button class="btn primary" onclick="copyReferralLink()">Copy Link</button>
-        </div>
-        <div class="stats-grid" style="margin-top:20px">
-          <div class="stat-card"><div class="stat-label">👥 Total referrals</div><div class="stat-value">3</div><div class="stat-foot">Friends joined via your link</div></div>
-          <div class="stat-card"><div class="stat-label">⭐ Demo rewards earned</div><div class="stat-value">150 CP</div><div class="stat-foot">Demo loyalty credits</div></div>
-          <div class="stat-card"><div class="stat-label">🏆 Referral tier</div><div class="stat-value">Silver</div><div class="stat-foot">Next tier at 10 referrals</div></div>
-          <div class="stat-card"><div class="stat-label">🔒 Payout status</div><div class="stat-value" style="font-size:16px;color:var(--muted)">Demo Mode</div><div class="stat-foot">Requires backend & KYC</div></div>
-        </div>
-      </section>
-
-      <!-- SUPPORT PAGE -->
-      <section class="page" id="page-support">
-        <div class="heading-row">
-          <div><div class="eyebrow">Help & Assistance</div><h1>Email Support & FAQ</h1><p class="sub">Get assistance with account questions, technical issues, or platform inquiries.</p></div>
-        </div>
-        <div class="card" style="padding:24px;margin-bottom:24px">
-          <h2>Contact Support Team</h2>
-          <p class="sub">Send a message to our support desk. We will configure live ticketing soon.</p>
-          <form onsubmit="event.preventDefault();showToast('Support ticket submitted successfully!');this.reset();" style="margin-top:15px;display:flex;flex-direction:column;gap:14px">
-            <div class="field"><label>Your Email Address</label><input type="email" placeholder="name@example.com" required></div>
-            <div class="field"><label>Subject / Issue Category</label><select><option>Account & Sign-in</option><option>Demo Trading Issue</option><option>Data Inaccuracy / Bug</option><option>General Inquiry</option></select></div>
-            <div class="field"><label>Message Details</label><textarea rows="4" placeholder="Describe your question or technical problem..." required style="padding:12px;border:1px solid var(--line);border-radius:11px;color:var(--text);background:#0c0b1d;resize:vertical"></textarea></div>
-            <button class="btn primary" type="submit" style="align-self:flex-start">Send Support Ticket</button>
-          </form>
-        </div>
-      </section>
-
-      <!-- PROFILE PAGE -->
-      <section class="page" id="page-profile">
-        <div class="heading-row">
-          <div><div class="eyebrow">Your space</div><h1>Profile & Settings</h1><p class="sub">Manage account preferences and review platform configuration.</p></div>
-        </div>
-        <div class="card profile-card">
-          <div class="avatar">◎</div>
-          <div style="flex:1"><h2>Welcome to CoinPulse</h2><p class="sub">Guest profile · Secure authentication will connect cloud sync.</p></div>
-          <button class="btn primary" onclick="openAccountModal()">Sign in / Sign up</button>
-        </div>
-        <div class="feature-grid">
-          <div class="card feature-card"><div class="feature-icon">★</div><h3>Favorite coins</h3><p>Mark assets with a star and find them in Markets → Favorites.</p><button class="text-btn" onclick="setFilter('favorites');navigate('markets')">View favorites →</button></div>
-          <div class="card feature-card"><div class="feature-icon">▤</div><h3>Portfolio tracker</h3><p>Record holdings and monitor real-time P&L performance.</p><button class="text-btn" onclick="navigate('assets')">Manage portfolio →</button></div>
-          <div class="card feature-card"><div class="feature-icon">◷</div><h3>Price history</h3><p>Explore candlestick charts with multiple historical periods.</p><button class="text-btn" onclick="navigate('markets')">Explore charts →</button></div>
-        </div>
-      </section>
-
-      <!-- LEGAL & POLICY FOOTER -->
-      <footer class="footer">
-        <div class="footer-links">
-          <a href="#" onclick="openLegalModal('terms');return false">Terms of Service</a>
-          <a href="#" onclick="openLegalModal('privacy');return false">Privacy Policy</a>
-          <a href="#" onclick="openLegalModal('risk');return false">Risk Disclosure</a>
-          <a href="#" onclick="navigate('support');return false">Contact Support</a>
-        </div>
-        <p>© 2026 CoinPulse Platforms Inc. All rights reserved. Market data supplied by CoinGecko.</p>
-      </footer>
-    </main>
-  </div>
-
-  <!-- Mobile Navigation Bar -->
-  <nav class="mobile-nav" aria-label="Main navigation">
-    <button class="nav-btn active" data-page="home" onclick="navigate('home')"><span class="nav-icon">⌂</span>Home</button>
-    <button class="nav-btn" data-page="markets" onclick="navigate('markets')"><span class="nav-icon">◈</span>Markets</button>
-    <button class="nav-btn" data-page="trade" onclick="navigate('trade')"><span class="nav-icon">⚡</span>Trade</button>
-    <button class="nav-btn" data-page="assets" onclick="navigate('assets')"><span class="nav-icon">▤</span>Assets</button>
-    <button class="nav-btn" data-page="leaderboard" onclick="navigate('leaderboard')"><span class="nav-icon">🏆</span>Ranks</button>
-    <button class="nav-btn" data-page="profile" onclick="navigate('profile')"><span class="nav-icon">◎</span>Profile</button>
-  </nav>
-</div>
-
-<!-- Floating AI Assistant Widget -->
-<button class="ai-fab" onclick="toggleAiModal()" aria-label="Open AI Assistant">🤖</button>
-<div class="ai-modal" id="aiModal">
-  <div class="ai-header">
-    <strong>CoinPulse AI Assistant</strong>
-    <button class="close-btn" style="width:28px;height:28px;font-size:16px" onclick="toggleAiModal()">×</button>
-  </div>
-  <div class="ai-body" id="aiChatBody">
-    <div class="ai-msg bot">Hello! I'm your CoinPulse AI helper. Ask me about portfolio P&L, trading strategies, or platform features!</div>
-  </div>
-  <div class="ai-footer">
-    <input type="text" id="aiInput" placeholder="Ask a crypto question..." onkeydown="if(event.key==='Enter')sendAiMessage()">
-    <button class="btn primary small" onclick="sendAiMessage()">Send</button>
-  </div>
-</div>
-
-<!-- Notifications Modal -->
-<div class="modal-backdrop" id="notifModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeNotificationsModal()">
-  <div class="modal" style="max-width:480px">
-    <div class="modal-head"><h2>Notification Center</h2><button class="close-btn" onclick="closeNotificationsModal()">×</button></div>
-    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
-      <div class="card" style="padding:14px"><strong>⚡ Platform Update</strong><p class="sub" style="margin-top:4px">New P&L cost basis tracking and quick trade buttons are now live!</p></div>
-      <div class="card" style="padding:14px"><strong>📈 Market Alert</strong><p class="sub" style="margin-top:4px">Bitcoin volatility detected past 24 hours. Check candlestick charts for details.</p></div>
-    </div>
-  </div>
-</div>
-
-<!-- Coin Details Modal -->
-<div class="modal-backdrop" id="coinModal" role="dialog" aria-modal="true" aria-labelledby="detailName" onclick="if(event.target===this)closeCoinModal()">
-  <div class="modal">
-    <div class="modal-head">
-      <div class="detail-top"><img id="detailImage" src="" alt=""><div><h2 id="detailName">Asset details</h2><div class="sub" id="detailSymbol"></div></div></div>
-      <button class="close-btn" onclick="closeCoinModal()" aria-label="Close chart">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="detail-price" id="detailPrice">—</div>
-      <div id="detailChange" class="sub">Loading market information...</div>
-      <div class="detail-stats">
-        <div class="detail-stat"><div class="stat-label">Market cap</div><strong id="detailCap">—</strong></div>
-        <div class="detail-stat"><div class="stat-label">24h volume</div><strong id="detailVolume">—</strong></div>
-        <div class="detail-stat"><div class="stat-label">Circulating supply</div><strong id="detailSupply">—</strong></div>
-      </div>
-      <div class="section-head" style="margin-top:23px"><h3>Price history</h3><button class="btn small" id="detailFavorite" onclick="toggleSelectedFavorite()">☆ Favorite</button></div>
-      <div class="chart-periods" id="chartPeriods">
-        <button class="period-btn active" data-days="1" onclick="changePeriod('1D',this)">1D</button>
-        <button class="period-btn" data-days="7" onclick="changePeriod('7D',this)">7D</button>
-        <button class="period-btn" data-days="30" onclick="changePeriod('1M',this)">1M</button>
-        <button class="period-btn" data-days="90" onclick="changePeriod('3M',this)">3M</button>
-        <button class="period-btn" data-days="365" onclick="changePeriod('1Y',this)">1Y</button>
-        <button class="period-btn" data-days="max" onclick="changePeriod('ALL',this)">ALL</button>
-      </div>
-      <div id="chart"><div class="chart-message">Choose a coin to load its historical chart.</div></div>
-    </div>
-    <div class="modal-foot">Historical candlestick data supplied by CoinGecko.</div>
-  </div>
-</div>
-
-<!-- Deposit / Withdraw Modal -->
-<div class="modal-backdrop" id="depositModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeDepositModal()">
-  <div class="modal" style="max-width:440px">
-    <div class="modal-head"><h2>Demo Funds Management</h2><button class="close-btn" onclick="closeDepositModal()">×</button></div>
-    <div class="modal-body">
-      <div class="notice">Simulate topping up or withdrawing virtual funds in your demo account.</div>
-      <div class="field" style="margin:15px 0"><label>Amount (USD)</label><input type="number" id="depositAmountInput" value="5000" min="1" step="any"></div>
-      <div style="display:flex;gap:10px">
-        <button class="btn primary" style="flex:1" onclick="processDepositWithdraw('DEPOSIT')">Add Funds</button>
-        <button class="btn" style="flex:1" onclick="processDepositWithdraw('WITHDRAW')">Withdraw</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Account & Legal Modals -->
-<div class="modal-backdrop" id="accountModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeAccountModal()">
-  <div class="modal" style="max-width:440px">
-    <div class="modal-head"><h2>CoinPulse account</h2><button class="close-btn" onclick="closeAccountModal()">×</button></div>
-    <div class="modal-body">
-      <div class="notice">Authentication has not been connected yet. This is an informational preview.</div>
-      <button class="btn primary" style="width:100%" onclick="closeAccountModal()">Got it</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-backdrop" id="legalModal" role="dialog" aria-modal="true" onclick="if(event.target===this)closeLegalModal()">
-  <div class="modal" style="max-width:600px">
-    <div class="modal-head"><h2 id="legalTitle">Legal Information</h2><button class="close-btn" onclick="closeLegalModal()">×</button></div>
-    <div class="modal-body" id="legalModalContent" style="line-height:1.7;font-size:13px;color:var(--muted)"></div>
-  </div>
-</div>
-
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-<script>
 "use strict";
 
 const API = "https://api.coingecko.com/api/v3";
-const REFRESH_MS = 30000;
+const REFRESH_MS = 60000;           // configurable; 60s halves request volume
+const MAX_BACKOFF_MS = 300000;
+const START_BALANCE = 10000;
 const STORAGE_FAVORITES = "coinpulse_favorites_v1";
 const STORAGE_PORTFOLIO = "coinpulse_portfolio_v2";
 const STORAGE_DEMO_CASH = "coinpulse_demo_cash_v1";
 const STORAGE_TRADES = "coinpulse_trades_v1";
+const STORAGE_POSITIONS = "coinpulse_positions_v2";   // new: {coinId:{qty,cost,symbol}}
+const STORAGE_REALIZED = "coinpulse_realized_v2";     // new: number
+const STORAGE_NETDEP = "coinpulse_netdeposits_v2";    // new: net demo deposits
+const STORAGE_BACKUP = "coinpulse_backup_v1";         // one-time backup of old data
 
-let coins = [];
-let globalData = null;
-let currentFilter = "all";
-let selectedCoin = null;
-let chart = null;
-let candleSeries = null;
-let chartResize = null;
-let refreshTimer = null;
-let chartRequest = 0;
-let currentPeriod = "1D";
-let toastTimer = null;
+let coins = [], globalData = null, currentFilter = "all", selectedCoin = null;
+let chart = null, candleSeries = null, chartRequest = 0, currentPeriod = "1D", toastTimer = null;
+let loading = false, lastUpdated = null, marketStale = false, failCount = 0, refreshTimer = null;
 
 function readStorage(key, fallback) {
-  try {
-    const value = localStorage.getItem(key);
-    return value ? JSON.parse(value) : fallback;
-  } catch (error) {
-    return fallback;
-  }
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch (e) { return fallback; }
 }
-
 function writeStorage(key, value) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-    return true;
-  } catch (error) {
-    return false;
-  }
+  try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+  catch (e) { return false; }
 }
 
+/* ---------- Load + migrate (old data is backed up first, never deleted) ---------- */
 let favorites = readStorage(STORAGE_FAVORITES, []);
 let portfolio = readStorage(STORAGE_PORTFOLIO, []);
-let demoCash = Number(readStorage(STORAGE_DEMO_CASH, 10000));
+let demoCash = Number(readStorage(STORAGE_DEMO_CASH, START_BALANCE));
 let tradeHistory = readStorage(STORAGE_TRADES, []);
-
+let positions = readStorage(STORAGE_POSITIONS, null);
+let realizedPnl = Number(readStorage(STORAGE_REALIZED, 0));
+let netDeposits = Number(readStorage(STORAGE_NETDEP, 0));
 if (!Array.isArray(favorites)) favorites = [];
 if (!Array.isArray(portfolio)) portfolio = [];
 if (!Array.isArray(tradeHistory)) tradeHistory = [];
+if (!Number.isFinite(demoCash)) demoCash = START_BALANCE;
+if (!Number.isFinite(realizedPnl)) realizedPnl = 0;
+if (!Number.isFinite(netDeposits)) netDeposits = 0;
 
+if (positions === null || typeof positions !== "object" || Array.isArray(positions)) {
+  if (localStorage.getItem(STORAGE_BACKUP) === null) {
+    writeStorage(STORAGE_BACKUP, { cash: demoCash, trades: tradeHistory, portfolio, time: Date.now() });
+  }
+  positions = {};
+  realizedPnl = 0;
+  // Replay old trades oldest -> newest. Sells beyond holdings are ignored in the replay
+  // (the old buggy cash credit is kept untouched so no balance silently changes).
+  [...tradeHistory].reverse().forEach(t => {
+    if (!t || !t.coinId || !(t.amount > 0) || !(t.price > 0)) return;
+    const p = positions[t.coinId] || { qty: 0, cost: 0, symbol: t.coinSymbol || "" };
+    if (t.type === "BUY") { p.qty += t.amount; p.cost += t.amount * t.price; }
+    else if (p.qty > 0) {
+      const q = Math.min(t.amount, p.qty), avg = p.cost / p.qty;
+      realizedPnl += q * (t.price - avg); p.qty -= q; p.cost -= q * avg;
+    }
+    positions[t.coinId] = p;
+  });
+  writeStorage(STORAGE_POSITIONS, positions);
+  writeStorage(STORAGE_REALIZED, realizedPnl);
+}
+
+/* ---------- Helpers ---------- */
 function money(value, maxDigits = 2) {
   if (value === null || value === undefined || !Number.isFinite(Number(value))) return "—";
-  const num = Number(value);
-  return num.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: num > 0 && num < 0.01 ? 4 : 2, maximumFractionDigits: maxDigits });
+  const n = Number(value);
+  return n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: n > 0 && n < 0.01 ? 4 : 2, maximumFractionDigits: maxDigits });
 }
-
 function compactMoney(value) {
   if (value === null || value === undefined || !Number.isFinite(Number(value))) return "—";
-  const n = Number(value);
-  const abs = Math.abs(n);
-  if (abs >= 1e12) return "$" + (n / 1e12).toFixed(2) + "T";
-  if (abs >= 1e9) return "$" + (n / 1e9).toFixed(2) + "B";
-  if (abs >= 1e6) return "$" + (n / 1e6).toFixed(2) + "M";
+  const n = Number(value), a = Math.abs(n);
+  if (a >= 1e12) return "$" + (n / 1e12).toFixed(2) + "T";
+  if (a >= 1e9) return "$" + (n / 1e9).toFixed(2) + "B";
+  if (a >= 1e6) return "$" + (n / 1e6).toFixed(2) + "M";
   return money(n);
 }
-
-function changeText(value) {
-  if (value === null || value === undefined || !Number.isFinite(Number(value))) return "—";
-  return (Number(value) > 0 ? "+" : "") + Number(value).toFixed(2) + "%";
+function changeText(v) {
+  if (v === null || v === undefined || !Number.isFinite(Number(v))) return "—";
+  return (Number(v) > 0 ? "+" : "") + Number(v).toFixed(2) + "%";
 }
-
-function changeClass(value) {
-  if (value === null || value === undefined || !Number.isFinite(Number(value))) return "muted";
-  return Number(value) >= 0 ? "positive" : "negative";
+function changeClass(v) {
+  if (v === null || v === undefined || !Number.isFinite(Number(v))) return "muted";
+  return Number(v) >= 0 ? "positive" : "negative";
 }
-
-function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[ch]);
+function escapeHTML(v) {
+  return String(v ?? "").replace(/[&<>"']/g, ch => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[ch]);
 }
-
 function showToast(message) {
-  const element = document.getElementById("toast");
-  element.textContent = message;
-  element.classList.add("show");
+  const el = document.getElementById("toast");
+  el.textContent = message; el.classList.add("show");
   if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => element.classList.remove("show"), 3000);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 3000);
 }
-
 function setConnection(ok, message) {
   document.getElementById("connectionStatus").textContent = message;
   document.getElementById("statusDot").style.background = ok ? "var(--green)" : "var(--red)";
 }
+function priceOf(id) {            // null = unavailable (never 0)
+  const c = coins.find(x => x.id === id);
+  const p = c ? Number(c.current_price) : NaN;
+  return Number.isFinite(p) && p > 0 ? p : null;
+}
+function posValue() {
+  let value = 0, cost = 0, missing = 0;
+  Object.entries(positions).forEach(([id, p]) => {
+    if (!(p.qty > 1e-12)) return;
+    const pr = priceOf(id);
+    if (pr === null) { missing++; return; }
+    value += p.qty * pr; cost += p.cost;
+  });
+  return { value, cost, missing };
+}
+function demoEquity() { const pv = posValue(); return { equity: demoCash + pv.value, ...pv }; }
 
+/* ---------- Navigation (Bug 18: use data-page) ---------- */
 function navigate(pageId) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-  
-  const targetPage = document.getElementById("page-" + pageId);
-  if (targetPage) targetPage.classList.add("active");
-  
-  document.querySelectorAll(`.nav-btn[onclick*="${pageId}"]`).forEach(b => b.classList.add("active"));
-  window.scrollTo({top:0, behavior:"smooth"});
-
-  if (pageId === 'trade') renderTradeSummary();
-  if (pageId === 'assets') renderPortfolio();
-  if (pageId === 'leaderboard') updateLeaderboardUser();
+  const target = document.getElementById("page-" + pageId);
+  if (target) target.classList.add("active");
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.page === pageId));
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (pageId === "trade") renderTradeSummary();
+  if (pageId === "assets") renderPortfolio();
+  if (pageId === "leaderboard") updateLeaderboardUser();
 }
 
+/* ---------- Markets (Bugs 7, 8, 15) ---------- */
+function showMarketError(msg) {
+  ["homeError", "marketError"].forEach(id => {
+    const el = document.getElementById(id);
+    el.textContent = msg; el.hidden = !msg;
+  });
+}
+function scheduleRefresh() {
+  clearTimeout(refreshTimer);
+  const delay = Math.min(REFRESH_MS * Math.pow(2, failCount), MAX_BACKOFF_MS);
+  refreshTimer = setTimeout(() => loadMarkets(false), delay);
+}
 async function loadMarkets(manual = false) {
+  if (loading) { if (manual) showToast("A refresh is already in progress."); return; }
+  loading = true;
   if (manual) showToast("Refreshing market data...");
   setConnection(true, "Updating markets...");
   document.getElementById("marketLoading").style.display = "block";
-  
   try {
     const [marketRes, globalRes] = await Promise.all([
       fetch(`${API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false`),
       fetch(`${API}/global`)
     ]);
-
-    if (!marketRes.ok) throw new Error("API rate limit reached.");
-    coins = await marketRes.json();
-    
+    if (marketRes.status === 429) { const e = new Error("rate"); e.kind = "rate"; throw e; }
+    if (!marketRes.ok) { const e = new Error("api"); e.kind = "api"; e.status = marketRes.status; throw e; }
+    const data = await marketRes.json();
+    if (!Array.isArray(data) || !data.length) { const e = new Error("bad"); e.kind = "api"; throw e; }
+    coins = data.filter(c => c && c.id && c.symbol && c.name);
     if (globalRes.ok) {
-      const globalJson = await globalRes.json();
-      globalData = globalJson.data;
-      renderGlobalStats();
+      try { const gj = await globalRes.json(); if (gj && gj.data) { globalData = gj.data; renderGlobalStats(); } } catch (e) {}
     }
-
-    setConnection(true, "Live market synced");
-    renderHome();
-    renderMarkets();
-    populateCoinSelectors();
-    calculateConversion();
+    lastUpdated = new Date(); marketStale = false; failCount = 0;
+    setConnection(true, "Live · updated " + lastUpdated.toLocaleTimeString());
+    showMarketError("");
+    renderHome(); renderMarkets(); populateCoinSelectors(); calculateConversion();
+    renderTradeSummary(); renderPortfolio();
   } catch (err) {
-    setConnection(false, "API rate limited / offline");
-    document.getElementById("homeError").textContent = "Unable to fetch live CoinGecko market data. Please click Refresh.";
-    document.getElementById("homeError").hidden = false;
-    document.getElementById("marketError").textContent = "Market data temporarily unavailable.";
-    document.getElementById("marketError").hidden = false;
+    failCount = Math.min(failCount + 1, 4);
+    marketStale = coins.length > 0;
+    const since = lastUpdated ? " Last successful update: " + lastUpdated.toLocaleTimeString() + "." : "";
+    let msg;
+    if (err.kind === "rate") msg = "CoinGecko rate limit reached (HTTP 429). Retrying automatically with a longer delay.";
+    else if (err.kind === "api") msg = "CoinGecko returned an error" + (err.status ? " (HTTP " + err.status + ")" : "") + ".";
+    else msg = "Network problem: could not reach CoinGecko.";
+    if (marketStale) msg += " Prices shown may be STALE." + since;
+    setConnection(false, marketStale ? "Stale data" + (lastUpdated ? " · " + lastUpdated.toLocaleTimeString() : "") : (err.kind === "rate" ? "Rate limited" : "Offline"));
+    showMarketError(msg);
   } finally {
+    loading = false;
     document.getElementById("marketLoading").style.display = "none";
+    scheduleRefresh();
   }
 }
 
 function renderGlobalStats() {
   if (!globalData) return;
   document.getElementById("globalCap").textContent = compactMoney(globalData.total_market_cap?.usd);
-  const capChange = globalData.market_cap_change_percentage_24h_usd;
-  const capEl = document.getElementById("globalCapChange");
-  capEl.textContent = (capChange >= 0 ? "+" : "") + Number(capChange || 0).toFixed(2) + "% past 24h";
-  capEl.className = "stat-foot " + changeClass(capChange);
-  
-  document.getElementById("btcDominance").textContent = Number(globalData.market_cap_percentage?.btc || 0).toFixed(1) + "%";
+  const ch = globalData.market_cap_change_percentage_24h_usd;
+  const el = document.getElementById("globalCapChange");
+  el.textContent = Number.isFinite(Number(ch)) ? (ch >= 0 ? "+" : "") + Number(ch).toFixed(2) + "% past 24h" : "—";
+  el.className = "stat-foot " + changeClass(ch);
+  const dom = globalData.market_cap_percentage?.btc;
+  document.getElementById("btcDominance").textContent = Number.isFinite(Number(dom)) ? Number(dom).toFixed(1) + "%" : "—";
   document.getElementById("globalVolume").textContent = compactMoney(globalData.total_volume?.usd);
   document.getElementById("coinCount").textContent = Number(globalData.active_cryptocurrencies || coins.length).toLocaleString();
 }
 
+const IMG_FALLBACK = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><circle cx='15' cy='15' r='15' fill='%23332f5a'/></svg>";
+function img(src, cls = "") { return `<img ${cls ? `class="${cls}"` : ""} src="${escapeHTML(src)}" alt="" onerror="this.onerror=null;this.src='${IMG_FALLBACK}'">`; }
+
 function renderHome() {
   const featured = coins.slice(0, 5);
-  const strip = document.getElementById("featuredCoins");
   if (!featured.length) return;
-  strip.innerHTML = featured.map(c => `
-    <button class="coin-card" onclick="openCoinModal('${c.id}')">
-      <div class="coin-top">
-        <img class="coin-icon" src="${c.image}" alt="${c.name}">
-        <span class="coin-symbol">${c.symbol.toUpperCase()}</span>
-      </div>
+  document.getElementById("featuredCoins").innerHTML = featured.map(c => `
+    <button class="coin-card" onclick="openCoinModal('${escapeHTML(c.id)}')">
+      <div class="coin-top">${img(c.image, "coin-icon")}<span class="coin-symbol">${escapeHTML(c.symbol.toUpperCase())}</span></div>
       <div class="coin-name">${escapeHTML(c.name)}</div>
       <div class="coin-price">${money(c.current_price)}</div>
       <div class="${changeClass(c.price_change_percentage_24h)}" style="font-size:11px;font-weight:700">${changeText(c.price_change_percentage_24h)}</div>
-    </button>
-  `).join("");
-
-  const rows = coins.slice(0, 8);
-  const tbody = document.getElementById("homeMarketRows");
-  tbody.innerHTML = rows.map(c => `
-    <tr onclick="openCoinModal('${c.id}')">
-      <td><div class="coin-cell"><img src="${c.image}" alt=""><div><div class="coin-title">${escapeHTML(c.name)}</div><div class="coin-sub">${c.symbol.toUpperCase()}</div></div></div></td>
+    </button>`).join("");
+  document.getElementById("homeMarketRows").innerHTML = coins.slice(0, 8).map(c => `
+    <tr onclick="openCoinModal('${escapeHTML(c.id)}')">
+      <td><div class="coin-cell">${img(c.image)}<div><div class="coin-title">${escapeHTML(c.name)}</div><div class="coin-sub">${escapeHTML(c.symbol.toUpperCase())}</div></div></div></td>
       <td class="table-number"><strong>${money(c.current_price)}</strong></td>
       <td class="table-number ${changeClass(c.price_change_percentage_24h)}">${changeText(c.price_change_percentage_24h)}</td>
       <td class="table-number muted">${compactMoney(c.market_cap)}</td>
-      <td><button class="btn small primary" onclick="event.stopPropagation();quickTrade('${c.id}')">⚡ Trade</button></td>
-    </tr>
-  `).join("");
+      <td><button class="btn small primary" onclick="event.stopPropagation();quickTrade('${escapeHTML(c.id)}')">⚡ Trade</button></td>
+    </tr>`).join("");
 }
+
+const DEFI_IDS = ["uniswap", "aave", "chainlink", "maker", "curve-dao-token"];
+const L1_IDS = ["bitcoin", "ethereum", "solana", "cardano", "avalanche-2", "binancecoin"];
 
 function renderMarkets() {
   const query = (document.getElementById("coinSearch").value || "").toLowerCase().trim();
   let list = [...coins];
-
-  if (query) {
-    list = list.filter(c => c.name.toLowerCase().includes(query) || c.symbol.toLowerCase().includes(query));
-  }
-
-  if (currentFilter === "gainers") {
-    list.sort((a, b) => (b.price_change_percentage_24h || 0) - (a.price_change_percentage_24h || 0));
-  } else if (currentFilter === "losers") {
-    list.sort((a, b) => (a.price_change_percentage_24h || 0) - (b.price_change_percentage_24h || 0));
-  } else if (currentFilter === "favorites") {
-    list = list.filter(c => favorites.includes(c.id));
-  } else if (currentFilter === "defi") {
-    list = list.filter(c => ['uniswap', 'aave', 'chainlink', 'maker', 'curve-dao-token'].includes(c.id));
-  } else if (currentFilter === "layer1") {
-    list = list.filter(c => ['bitcoin', 'ethereum', 'solana', 'cardano', 'avalanche-2', 'binancecoin'].includes(c.id));
-  }
+  if (query) list = list.filter(c => c.name.toLowerCase().includes(query) || c.symbol.toLowerCase().includes(query));
+  const chg = c => Number.isFinite(Number(c.price_change_percentage_24h)) ? Number(c.price_change_percentage_24h) : 0;
+  const rank = c => c.market_cap_rank || 9999;
+  if (currentFilter === "gainers") list.sort((a, b) => chg(b) - chg(a) || rank(a) - rank(b));
+  else if (currentFilter === "losers") list.sort((a, b) => chg(a) - chg(b) || rank(a) - rank(b));
+  else if (currentFilter === "favorites") list = list.filter(c => favorites.includes(c.id));
+  else if (currentFilter === "defi") list = list.filter(c => DEFI_IDS.includes(c.id));
+  else if (currentFilter === "layer1") list = list.filter(c => L1_IDS.includes(c.id));
 
   const tbody = document.getElementById("marketRows");
   if (!list.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">No cryptocurrencies match your filter.</div></td></tr>`;
+    const msg = !coins.length ? "Market data not loaded yet." : "No cryptocurrencies match this filter.";
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">${msg}</div></td></tr>`;
     return;
   }
-
   tbody.innerHTML = list.map(c => {
     const isFav = favorites.includes(c.id);
-    return `
-      <tr onclick="openCoinModal('${c.id}')">
-        <td><div class="coin-cell"><span class="muted" style="width:24px">${c.market_cap_rank || '—'}</span><img src="${c.image}" alt=""><div><div class="coin-title">${escapeHTML(c.name)}</div><div class="coin-sub">${c.symbol.toUpperCase()}</div></div></div></td>
-        <td class="table-number"><strong>${money(c.current_price)}</strong></td>
-        <td class="table-number ${changeClass(c.price_change_percentage_24h)}">${changeText(c.price_change_percentage_24h)}</td>
-        <td class="table-number muted">${compactMoney(c.market_cap)}</td>
-        <td class="table-number muted">${compactMoney(c.total_volume)}</td>
-        <td><button class="star ${isFav ? 'on' : ''}" onclick="event.stopPropagation();toggleFavorite('${c.id}')" aria-label="Favorite">★</button></td>
-        <td><button class="btn small primary" onclick="event.stopPropagation();quickTrade('${c.id}')">⚡ Trade</button></td>
-      </tr>
-    `;
+    return `<tr onclick="openCoinModal('${escapeHTML(c.id)}')">
+      <td><div class="coin-cell"><span class="muted" style="width:24px">${c.market_cap_rank || "—"}</span>${img(c.image)}<div><div class="coin-title">${escapeHTML(c.name)}</div><div class="coin-sub">${escapeHTML(c.symbol.toUpperCase())}</div></div></div></td>
+      <td class="table-number"><strong>${money(c.current_price)}</strong></td>
+      <td class="table-number ${changeClass(c.price_change_percentage_24h)}">${changeText(c.price_change_percentage_24h)}</td>
+      <td class="table-number muted">${compactMoney(c.market_cap)}</td>
+      <td class="table-number muted">${compactMoney(c.total_volume)}</td>
+      <td><button class="star ${isFav ? "on" : ""}" onclick="event.stopPropagation();toggleFavorite('${escapeHTML(c.id)}')" aria-label="Favorite">★</button></td>
+      <td><button class="btn small primary" onclick="event.stopPropagation();quickTrade('${escapeHTML(c.id)}')">⚡ Trade</button></td>
+    </tr>`;
   }).join("");
 }
 
 function setFilter(filter) {
   currentFilter = filter;
-  document.querySelectorAll(".filter-btn").forEach(b => {
-    b.classList.toggle("active", b.dataset.filter === filter);
-  });
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === filter));
   renderMarkets();
 }
-
 function toggleFavorite(id) {
-  const index = favorites.indexOf(id);
-  if (index >= 0) {
-    favorites.splice(index, 1);
-    showToast("Removed from favorites");
-  } else {
-    favorites.push(id);
-    showToast("Added to favorites");
-  }
-  writeStorage(STORAGE_FAVORITES, favorites);
+  const i = favorites.indexOf(id);
+  if (i >= 0) favorites.splice(i, 1); else favorites.push(id);
+  if (!writeStorage(STORAGE_FAVORITES, favorites)) showToast("Could not save favorites (browser storage unavailable).");
+  else showToast(i >= 0 ? "Removed from favorites" : "Added to favorites");
   renderMarkets();
   if (selectedCoin && selectedCoin.id === id) updateFavoriteButton();
 }
 
 function populateCoinSelectors() {
-  const options = coins.map(c => `<option value="${c.id}">${c.name} (${c.symbol.toUpperCase()})</option>`).join("");
-  ['holdingCoin', 'tradeCoin', 'convertFrom'].forEach(id => {
+  const options = coins.map(c => `<option value="${escapeHTML(c.id)}">${escapeHTML(c.name)} (${escapeHTML(c.symbol.toUpperCase())})</option>`).join("");
+  ["holdingCoin", "tradeCoin", "convertFrom"].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.innerHTML = options;
+    if (!el) return;
+    const prev = el.value;
+    el.innerHTML = options;
+    if (prev && coins.some(c => c.id === prev)) el.value = prev;
   });
 }
-
 function quickTrade(coinId) {
-  navigate('trade');
+  navigate("trade");
   const sel = document.getElementById("tradeCoin");
   if (sel) sel.value = coinId;
   showToast("Asset pre-filled for demo trade!");
 }
 
+/* ---------- Converter (Bug 5: real IDs, no fake fallback prices) ---------- */
 function calculateConversion() {
-  const amt = Number(document.getElementById("convertAmount").value || 0);
-  const coinId = document.getElementById("convertFrom").value;
-  const coin = coins.find(c => c.id === coinId);
-  const price = coin ? coin.current_price : (coinId === 'btc' ? 65000 : coinId === 'eth' ? 3500 : 1);
-  document.getElementById("convertResult").value = money(amt * price);
+  const out = document.getElementById("convertResult");
+  const amt = Number(document.getElementById("convertAmount").value);
+  const price = priceOf(document.getElementById("convertFrom").value);
+  if (price === null) { out.value = coins.length ? "Price unavailable" : "Waiting for live price"; return; }
+  if (!Number.isFinite(amt) || amt < 0) { out.value = "Enter a valid amount"; return; }
+  out.value = money(amt * price) + (marketStale ? " (stale)" : "");
 }
 
-/* Portfolio & P&L Tracker */
-document.getElementById("holdingForm")?.addEventListener("submit", function(e) {
+/* ---------- Manual portfolio (Bugs 9, 10) ---------- */
+document.getElementById("holdingForm")?.addEventListener("submit", function (e) {
   e.preventDefault();
   const coinId = document.getElementById("holdingCoin").value;
   const amount = Number(document.getElementById("holdingAmount").value);
   const avgCost = Number(document.getElementById("holdingCost").value);
-  if (!coinId || !amount || amount <= 0) return;
-
-  portfolio.push({ id: coinId, amount, avgCost });
-  writeStorage(STORAGE_PORTFOLIO, portfolio);
+  if (!coinId || !Number.isFinite(amount) || amount <= 0 || !Number.isFinite(avgCost) || avgCost <= 0) {
+    showToast("Quantity and purchase price must be numbers greater than zero.");
+    return;
+  }
+  const next = portfolio.map(h => ({ ...h }));
+  const ex = next.find(h => h.id === coinId && h.avgCost > 0);
+  if (ex) {                                   // merge: weighted-average cost
+    const q = ex.amount + amount;
+    ex.avgCost = (ex.amount * ex.avgCost + amount * avgCost) / q;
+    ex.amount = q;
+  } else next.push({ id: coinId, amount, avgCost });
+  if (!writeStorage(STORAGE_PORTFOLIO, next)) { showToast("Save failed — holding NOT stored."); return; }
+  portfolio = next;
   renderPortfolio();
   this.reset();
-  showToast("Holding added with cost basis!");
+  showToast(ex ? "Holding merged (weighted-average cost updated)." : "Holding added.");
 });
 
 function renderPortfolio() {
-  let totalValue = 0;
-  let totalCostBasis = 0;
   const tbody = document.getElementById("portfolioRows");
-  
+  const set = (id, t) => { document.getElementById(id).textContent = t; };
   if (!portfolio.length) {
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">No holdings yet. Add your first coin above.</div></td></tr>`;
-    document.getElementById("portfolioValue").textContent = "$0.00";
-    document.getElementById("portfolioCostBasis").textContent = "$0.00";
-    document.getElementById("portfolioTotalPnl").textContent = "$0.00";
+    set("portfolioValue", "$0.00"); set("portfolioCostBasis", "$0.00"); set("portfolioTotalPnl", "$0.00");
     return;
   }
-
+  let totalValue = 0, pricedCost = 0, allCost = 0, missing = 0;
   tbody.innerHTML = portfolio.map((item, index) => {
     const coin = coins.find(c => c.id === item.id);
-    const price = coin ? coin.current_price : 0;
-    const val = price * item.amount;
+    const price = priceOf(item.id);
     const cost = (item.avgCost || 0) * item.amount;
-    const pnl = val - cost;
-    const pnlPercent = cost > 0 ? (pnl / cost) * 100 : 0;
-
-    totalValue += val;
-    totalCostBasis += cost;
-
-    return `
-      <tr>
-        <td><div class="coin-cell">${coin ? `<img src="${coin.image}" alt="">` : ''}<div><div class="coin-title">${coin ? escapeHTML(coin.name) : item.id}</div><div class="coin-sub">${coin ? coin.symbol.toUpperCase() : ''}</div></div></div></td>
-        <td class="table-number">${item.amount.toLocaleString()}</td>
-        <td class="table-number">${money(item.avgCost)}</td>
-        <td class="table-number">${money(price)}</td>
-        <td class="table-number"><strong>${money(val)}</strong></td>
-        <td class="table-number ${changeClass(pnl)}">${money(pnl)} (${changeText(pnlPercent)})</td>
-        <td><button class="btn small" style="color:#ff6487" onclick="removeHolding(${index})">Remove</button></td>
-      </tr>
-    `;
+    allCost += cost;
+    let valCell = "Unavailable", pnlCell = "Unavailable", pnlCls = "muted";
+    if (price !== null) {
+      const val = price * item.amount, pnl = val - cost;
+      totalValue += val; pricedCost += cost;
+      valCell = money(val);
+      pnlCell = `${money(pnl)} (${changeText(cost > 0 ? (pnl / cost) * 100 : null)})`;
+      pnlCls = changeClass(pnl);
+    } else missing++;
+    return `<tr>
+      <td><div class="coin-cell">${coin ? img(coin.image) : ""}<div><div class="coin-title">${coin ? escapeHTML(coin.name) : escapeHTML(item.id)}</div><div class="coin-sub">${coin ? escapeHTML(coin.symbol.toUpperCase()) : ""}</div></div></div></td>
+      <td class="table-number">${item.amount.toLocaleString()}</td>
+      <td class="table-number">${money(item.avgCost)}</td>
+      <td class="table-number">${money(price)}</td>
+      <td class="table-number"><strong>${valCell}</strong></td>
+      <td class="table-number ${pnlCls}">${pnlCell}</td>
+      <td><button class="btn small" style="color:#ff6487" onclick="removeHolding(${index})">Remove</button></td>
+    </tr>`;
   }).join("");
-
-  const totalPnl = totalValue - totalCostBasis;
-  document.getElementById("portfolioValue").textContent = money(totalValue);
-  document.getElementById("portfolioCostBasis").textContent = money(totalCostBasis);
+  const totalPnl = totalValue - pricedCost;
+  const partial = missing ? ` (partial: ${missing} holding${missing > 1 ? "s" : ""} without price)` : "";
+  set("portfolioValue", money(totalValue) + (missing ? "*" : ""));
+  set("portfolioCostBasis", money(allCost));
   const pnlEl = document.getElementById("portfolioTotalPnl");
-  pnlEl.textContent = money(totalPnl);
+  pnlEl.textContent = money(totalPnl) + (missing ? "*" : "");
   pnlEl.className = "stat-value " + changeClass(totalPnl);
-  updateLeaderboardUser();
+  pnlEl.title = partial;
+  if (missing) showToast("Some holdings have no live price and are excluded from totals.");
 }
-
 function removeHolding(index) {
-  portfolio.splice(index, 1);
-  writeStorage(STORAGE_PORTFOLIO, portfolio);
-  renderPortfolio();
-  showToast("Holding removed");
+  const next = portfolio.filter((_, i) => i !== index);
+  if (!writeStorage(STORAGE_PORTFOLIO, next)) { showToast("Save failed — holding NOT removed."); return; }
+  portfolio = next; renderPortfolio(); showToast("Holding removed");
 }
 
+/* ---------- Leaderboard (Bug 12: demo equity only) ---------- */
 function updateLeaderboardUser() {
-  let val = demoCash;
-  portfolio.forEach(item => {
-    const coin = coins.find(c => c.id === item.id);
-    if (coin) val += coin.current_price * item.amount;
-  });
-  const ret = ((val - 10000) / 10000) * 100;
-  const userValEl = document.getElementById("leaderboardUserVal");
-  const userRetEl = document.getElementById("leaderboardUserRet");
-  if (userValEl) userValEl.textContent = money(val);
-  if (userRetEl) {
-    userRetEl.textContent = changeText(ret);
-    userRetEl.className = "table-number " + changeClass(ret);
-  }
+  const { equity, missing } = demoEquity();
+  const base = START_BALANCE + netDeposits;
+  const ret = base > 0 ? ((equity - base) / base) * 100 : null;
+  const v = document.getElementById("leaderboardUserVal"), r = document.getElementById("leaderboardUserRet");
+  if (v) v.textContent = money(equity) + (missing ? "*" : "");
+  if (r) { r.textContent = changeText(ret); r.className = "table-number " + changeClass(ret); }
 }
 
-/* Demo Trading */
+/* ---------- Demo trading (Bugs 1, 2, 3, 4) ---------- */
+function ensureDemoCards() {
+  const grid = document.querySelector("#page-trade .portfolio-summary");
+  if (!grid || document.getElementById("demoRealized")) return;
+  grid.style.gridTemplateColumns = "repeat(auto-fit,minmax(180px,1fr))";
+  grid.insertAdjacentHTML("beforeend",
+    `<div class="stat-card"><div class="stat-label">✅ Realized P&L</div><div class="stat-value" id="demoRealized">$0.00</div><div class="stat-foot">From closed (sold) units</div></div>
+     <div class="stat-card"><div class="stat-label">🧮 Total demo equity</div><div class="stat-value" id="demoEquity">$0.00</div><div class="stat-foot">Cash + open positions (simulation)</div></div>`);
+  const sub = document.querySelector("#page-trade .heading-row .sub");
+  if (sub) sub.textContent += " Demo account is separate from the manual Portfolio tracker. Stored only in this browser — simulation, not real money.";
+}
 function renderTradeSummary() {
+  ensureDemoCards();
+  const { value, cost, missing } = posValue();
+  const unreal = value - cost;
+  const star = missing ? "*" : "";
+  const cls = (id, v) => { const el = document.getElementById(id); el.className = "stat-value " + changeClass(v); };
   document.getElementById("demoBalance").textContent = money(demoCash);
-  let positionsVal = 0;
-  tradeHistory.forEach(t => {
-    const coin = coins.find(c => c.id === t.coinId);
-    if (coin && t.type === 'BUY') positionsVal += t.amount * coin.current_price;
-  });
-  document.getElementById("demoPositionsValue").textContent = money(positionsVal);
-  document.getElementById("demoPnl").textContent = money(positionsVal - 5000);
+  document.getElementById("demoPositionsValue").textContent = money(value) + star;
+  document.getElementById("demoPnl").textContent = money(unreal) + star;  cls("demoPnl", unreal);
+  document.getElementById("demoRealized").textContent = money(realizedPnl); cls("demoRealized", realizedPnl);
+  document.getElementById("demoEquity").textContent = money(demoCash + value) + star;
 
   const tbody = document.getElementById("tradeHistoryRows");
   if (!tradeHistory.length) {
     tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No demo transactions executed yet.</div></td></tr>`;
     return;
   }
-  tbody.innerHTML = tradeHistory.map(t => `
-    <tr>
-      <td class="muted">${new Date(t.time).toLocaleTimeString()}</td>
-      <td><span style="font-weight:700;color:${t.type==='BUY'?'var(--green)':'var(--red)'}">${t.type}</span></td>
-      <td>${t.coinSymbol.toUpperCase()}</td>
-      <td class="table-number">${t.amount}</td>
-      <td class="table-number">${money(t.price)}</td>
-      <td class="table-number"><strong>${money(t.total)}</strong></td>
-    </tr>
-  `).join("");
+  tbody.innerHTML = tradeHistory.map(t => `<tr>
+    <td class="muted">${new Date(t.time).toLocaleString()}</td>
+    <td><span style="font-weight:700;color:${t.type === "BUY" ? "var(--green)" : "var(--red)"}">${escapeHTML(t.type)}</span></td>
+    <td>${escapeHTML(String(t.coinSymbol || "").toUpperCase())}</td>
+    <td class="table-number">${escapeHTML(t.amount)}</td>
+    <td class="table-number">${money(t.price)}</td>
+    <td class="table-number"><strong>${money(t.total)}</strong></td></tr>`).join("");
+}
+
+function persistDemo(next) {
+  const old = { cash: demoCash, pos: positions, real: realizedPnl, hist: tradeHistory, dep: netDeposits };
+  const ok = writeStorage(STORAGE_DEMO_CASH, next.cash) && writeStorage(STORAGE_POSITIONS, next.pos) &&
+             writeStorage(STORAGE_REALIZED, next.real) && writeStorage(STORAGE_TRADES, next.hist) &&
+             writeStorage(STORAGE_NETDEP, next.dep);
+  if (!ok) {   // best-effort rollback of storage; memory was never changed
+    writeStorage(STORAGE_DEMO_CASH, old.cash); writeStorage(STORAGE_POSITIONS, old.pos);
+    writeStorage(STORAGE_REALIZED, old.real); writeStorage(STORAGE_TRADES, old.hist); writeStorage(STORAGE_NETDEP, old.dep);
+    return false;
+  }
+  demoCash = next.cash; positions = next.pos; realizedPnl = next.real; tradeHistory = next.hist; netDeposits = next.dep;
+  return true;
 }
 
 function executeTrade(type) {
   const coinId = document.getElementById("tradeCoin").value;
   const amount = Number(document.getElementById("tradeAmount").value);
-  if (!coinId || !amount || amount <= 0) {
-    showToast("Please select a coin and enter a valid quantity.");
-    return;
-  }
+  if (!coinId || !Number.isFinite(amount) || amount <= 0) { showToast("Select a coin and enter a valid quantity."); return; }
   const coin = coins.find(c => c.id === coinId);
-  if (!coin) return;
+  const price = priceOf(coinId);
+  if (!coin || price === null) { showToast("No live price available for this asset."); return; }
+  if (marketStale && !confirm("Market data is stale. Trade at the last known price?")) return;
 
-  const totalCost = amount * coin.current_price;
-  if (type === 'BUY') {
-    if (demoCash < totalCost) { showToast("Insufficient demo cash balance!"); return; }
-    demoCash -= totalCost;
+  const total = amount * price;
+  const next = { cash: demoCash, pos: JSON.parse(JSON.stringify(positions)), real: realizedPnl, hist: tradeHistory, dep: netDeposits };
+  const p = next.pos[coinId] || { qty: 0, cost: 0, symbol: coin.symbol };
+  if (type === "BUY") {
+    if (demoCash < total) { showToast("Insufficient demo cash balance!"); return; }
+    next.cash -= total; p.qty += amount; p.cost += total;
   } else {
-    demoCash += totalCost;
+    if (p.qty < amount - 1e-12) { showToast(`You only hold ${p.qty} ${coin.symbol.toUpperCase()} in the demo account.`); return; }
+    const avg = p.cost / p.qty;
+    next.cash += total; next.real += amount * (price - avg);
+    p.qty -= amount; p.cost -= amount * avg;
+    if (p.qty < 1e-12) { p.qty = 0; p.cost = 0; }
   }
+  next.pos[coinId] = p;
+  next.hist = [{ time: Date.now(), type, coinId, coinSymbol: coin.symbol, amount, price, total }, ...tradeHistory];
 
-  writeStorage(STORAGE_DEMO_CASH, demoCash);
-  tradeHistory.unshift({ time: Date.now(), type, coinId, coinSymbol: coin.symbol, amount, price: coin.current_price, total: totalCost });
-  writeStorage(STORAGE_TRADES, tradeHistory);
-
-  renderTradeSummary();
-  showToast(`Demo ${type} order executed successfully!`);
+  if (!persistDemo(next)) { showToast("Save failed — order NOT recorded."); return; }
+  renderTradeSummary(); updateLeaderboardUser();
+  showToast(`Demo ${type} order recorded (simulation).`);
   document.getElementById("tradeAmount").value = "";
 }
 
@@ -1110,19 +462,16 @@ function closeDepositModal() { document.getElementById("depositModal").classList
 
 function processDepositWithdraw(action) {
   const amount = Number(document.getElementById("depositAmountInput").value);
-  if (!amount || amount <= 0) return;
-  if (action === 'DEPOSIT') demoCash += amount;
-  else {
-    if (demoCash < amount) { showToast("Insufficient demo funds."); return; }
-    demoCash -= amount;
-  }
-  writeStorage(STORAGE_DEMO_CASH, demoCash);
-  renderTradeSummary();
-  closeDepositModal();
-  showToast("Demo funds updated.");
+  if (!Number.isFinite(amount) || amount <= 0) { showToast("Enter a valid amount."); return; }
+  const sign = action === "DEPOSIT" ? 1 : -1;
+  if (sign < 0 && demoCash < amount) { showToast("Insufficient demo funds."); return; }
+  const next = { cash: demoCash + sign * amount, pos: positions, real: realizedPnl, hist: tradeHistory, dep: netDeposits + sign * amount };
+  if (!persistDemo(next)) { showToast("Save failed — balance NOT changed."); return; }
+  renderTradeSummary(); updateLeaderboardUser(); closeDepositModal();
+  showToast("Demo funds updated (virtual money only).");
 }
 
-/* AI Assistant & Notifications */
+/* ---------- AI, notifications, referral, legal ---------- */
 function toggleAiModal() { document.getElementById("aiModal").classList.toggle("open"); }
 function openNotificationsModal() { document.getElementById("notifModal").classList.add("open"); }
 function closeNotificationsModal() { document.getElementById("notifModal").classList.remove("open"); }
@@ -1131,44 +480,49 @@ function sendAiMessage() {
   const input = document.getElementById("aiInput");
   const text = input.value.trim();
   if (!text) return;
-
   const body = document.getElementById("aiChatBody");
-  body.innerHTML += `<div class="ai-msg user">${escapeHTML(text)}</div>`;
-  input.value = "";
-  body.scrollTop = body.scrollHeight;
-
+  body.insertAdjacentHTML("beforeend", `<div class="ai-msg user">${escapeHTML(text)}</div>`);
+  input.value = ""; body.scrollTop = body.scrollHeight;
   setTimeout(() => {
-    let reply = "I can help you review your portfolio P&L, explore DeFi and Layer 1 coins, or check market stats!";
-    const lower = text.toLowerCase();
-    if (lower.includes("p&l") || lower.includes("profit")) reply = "Your portfolio P&L tracks your average purchase cost against current live market prices automatically.";
-    else if (lower.includes("trade") || lower.includes("demo")) reply = "Use the Trade tab or the ⚡ Quick Trade buttons in the market table to test paper trades with your $10,000 balance.";
-    body.innerHTML += `<div class="ai-msg bot">${reply}</div>`;
+    let reply = "I can point you to the P&L, demo trading or markets features. (Canned answers only — not connected to an AI model yet.)";
+    const l = text.toLowerCase();
+    if (l.includes("p&l") || l.includes("profit")) reply = "The Trade page shows demo realized and unrealized P&L; the Portfolio page tracks manual holdings. They are separate. (Canned answer.)";
+    else if (l.includes("trade") || l.includes("demo")) reply = "Use the Trade tab or ⚡ Trade buttons to place simulated orders with your demo balance. (Canned answer.)";
+    body.insertAdjacentHTML("beforeend", `<div class="ai-msg bot">${escapeHTML(reply)}</div>`);
     body.scrollTop = body.scrollHeight;
   }, 600);
 }
 
-function copyReferralLink() {
-  navigator.clipboard.writeText("https://coinpulse.io/ref/CP-9482-USER");
-  showToast("Referral link copied!");
+async function copyReferralLink() {
+  const link = document.getElementById("referralLinkText").textContent.trim();
+  try {
+    await navigator.clipboard.writeText(link);
+    showToast("Example link copied (not a live referral link).");
+  } catch (e) {
+    const range = document.createRange();
+    range.selectNodeContents(document.getElementById("referralLinkText"));
+    const s = getSelection(); s.removeAllRanges(); s.addRange(range);
+    showToast("Copy blocked by browser — link selected, press Ctrl/Cmd+C.");
+  }
 }
 
 const legalTexts = {
-  terms: "<h3>Terms of Service</h3><p>By accessing CoinPulse, you agree to comply with these terms. Educational simulation tools only.</p>",
-  privacy: "<h3>Privacy Policy</h3><p>Watchlists and portfolio data are stored locally in your browser.</p>",
-  risk: "<h3>Risk Disclosure</h3><p>Cryptocurrency trading carries high risk. Demo results do not represent actual trading.</p>"
+  terms: "<h3>Terms of Service</h3><p><em>Placeholder — full terms are being prepared.</em> CoinPulse is an educational simulation tool.</p>",
+  privacy: "<h3>Privacy Policy</h3><p><em>Placeholder — full policy is being prepared.</em> Watchlists, demo trades and portfolio data are stored locally in your browser.</p>",
+  risk: "<h3>Risk Disclosure</h3><p><em>Placeholder.</em> Cryptocurrency trading carries high risk. Demo results do not represent real trading.</p>"
 };
 function openLegalModal(type) {
-  document.getElementById("legalTitle").textContent = type === 'terms' ? 'Terms of Service' : type === 'privacy' ? 'Privacy Policy' : 'Risk Disclosure';
-  document.getElementById("legalModalContent").innerHTML = legalTexts[type] || '';
+  document.getElementById("legalTitle").textContent = type === "terms" ? "Terms of Service" : type === "privacy" ? "Privacy Policy" : "Risk Disclosure";
+  document.getElementById("legalModalContent").innerHTML = legalTexts[type] || "";
   document.getElementById("legalModal").classList.add("open");
 }
 function closeLegalModal() { document.getElementById("legalModal").classList.remove("open"); }
 
+/* ---------- Coin modal + chart (Bugs 11, 20) ---------- */
 async function openCoinModal(id) {
   const coin = coins.find(c => c.id === id);
   if (!coin) return;
   selectedCoin = coin;
-
   document.getElementById("detailImage").src = coin.image;
   document.getElementById("detailName").textContent = coin.name;
   document.getElementById("detailSymbol").textContent = coin.symbol.toUpperCase();
@@ -1177,77 +531,93 @@ async function openCoinModal(id) {
   document.getElementById("detailCap").textContent = compactMoney(coin.market_cap);
   document.getElementById("detailVolume").textContent = compactMoney(coin.total_volume);
   document.getElementById("detailSupply").textContent = Number(coin.circulating_supply || 0).toLocaleString() + " " + coin.symbol.toUpperCase();
-
   updateFavoriteButton();
+  document.querySelectorAll(".period-btn").forEach(b => b.classList.toggle("active", b.dataset.days === "1"));
   document.getElementById("coinModal").classList.add("open");
   loadChart(coin.id, 1);
 }
-
 function closeCoinModal() {
+  chartRequest++;                              // invalidate any pending chart request
   document.getElementById("coinModal").classList.remove("open");
   selectedCoin = null;
   if (chart) { chart.remove(); chart = null; }
 }
-
 function updateFavoriteButton() {
   if (!selectedCoin) return;
-  const isFav = favorites.includes(selectedCoin.id);
-  const btn = document.getElementById("detailFavorite");
-  btn.textContent = isFav ? "★ Favorited" : "☆ Favorite";
-  btn.style.color = isFav ? "#ffd66e" : "";
+  const fav = favorites.includes(selectedCoin.id), btn = document.getElementById("detailFavorite");
+  btn.textContent = fav ? "★ Favorited" : "☆ Favorite";
+  btn.style.color = fav ? "#ffd66e" : "";
 }
-
-function toggleSelectedFavorite() {
-  if (!selectedCoin) return;
-  toggleFavorite(selectedCoin.id);
-  updateFavoriteButton();
-}
-
+function toggleSelectedFavorite() { if (selectedCoin) { toggleFavorite(selectedCoin.id); updateFavoriteButton(); } }
 function changePeriod(label, btn) {
   document.querySelectorAll(".period-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   currentPeriod = label;
   if (selectedCoin) loadChart(selectedCoin.id, btn.dataset.days);
 }
-
 async function loadChart(coinId, days) {
   const container = document.getElementById("chart");
-  container.innerHTML = `<div class="chart-message">Loading chart history...</div>`;
+  const msg = t => { container.innerHTML = `<div class="chart-message">${t}</div>`; };
   const requestId = ++chartRequest;
-
+  msg("Loading chart history...");
   try {
-    const res = await fetch(`${API}/coins/${coinId}/ohlc?vs_currency=usd&days=${days}`);
-    if (!res.ok) throw new Error();
+    if (typeof LightweightCharts === "undefined") throw new Error("lib");
+    const res = await fetch(`${API}/coins/${encodeURIComponent(coinId)}/ohlc?vs_currency=usd&days=${days}`);
+    if (res.status === 429) throw new Error("rate");
+    if (!res.ok) throw new Error("api");
     const data = await res.json();
-    if (requestId !== chartRequest || !Array.isArray(data)) return;
-
+    if (requestId !== chartRequest) return;
+    if (!Array.isArray(data)) throw new Error("bad");
+    const seen = new Set();
+    const candles = data
+      .filter(i => Array.isArray(i) && i.slice(0, 5).every(Number.isFinite))
+      .map(i => ({ time: Math.floor(i[0] / 1000), open: i[1], high: i[2], low: i[3], close: i[4] }))
+      .sort((a, b) => a.time - b.time)
+      .filter(c => !seen.has(c.time) && seen.add(c.time));
+    if (!candles.length) throw new Error("empty");
     container.innerHTML = "";
     if (chart) { chart.remove(); chart = null; }
-
     chart = LightweightCharts.createChart(container, {
-      layout: { background: { type: 'solid', color: '#100f24' }, textColor: '#9290b3' },
-      grid: { vertLines: { color: 'rgba(164,150,255,0.06)' }, horzLines: { color: 'rgba(164,150,255,0.06)' } },
-      timeScale: { borderColor: 'rgba(164,150,255,0.15)' },
-      rightPriceScale: { borderColor: 'rgba(164,150,255,0.15)' }
+      layout: { background: { type: "solid", color: "#100f24" }, textColor: "#9290b3" },
+      grid: { vertLines: { color: "rgba(164,150,255,0.06)" }, horzLines: { color: "rgba(164,150,255,0.06)" } },
+      timeScale: { borderColor: "rgba(164,150,255,0.15)" },
+      rightPriceScale: { borderColor: "rgba(164,150,255,0.15)" }
     });
-
-    candleSeries = chart.addCandlestickSeries({ upColor: '#37e3a0', downColor: '#ff6487', borderVisible: false });
-    candleSeries.setData(data.map(item => ({ time: Math.floor(item[0] / 1000), open: item[1], high: item[2], low: item[3], close: item[4] })));
+    candleSeries = chart.addCandlestickSeries({ upColor: "#37e3a0", downColor: "#ff6487", borderVisible: false });
+    candleSeries.setData(candles);
     chart.timeScale().fitContent();
   } catch (err) {
-    if (requestId === chartRequest) container.innerHTML = `<div class="chart-message">Candle history unavailable for this asset.</div>`;
+    if (requestId !== chartRequest) return;
+    const m = { lib: "Chart library failed to load. Check your connection and reload.", rate: "Rate limit reached. Try again in a minute.", empty: "No candle data for this asset/period." };
+    msg(m[err.message] || "Candle history unavailable for this asset.");
   }
 }
 
 function openAccountModal() { document.getElementById("accountModal").classList.add("open"); }
 function closeAccountModal() { document.getElementById("accountModal").classList.remove("open"); }
 
+/* ---------- Honest labelling of unconnected features (step 7) ---------- */
+function initHonestLabels() {
+  const sel = document.getElementById("convertFrom");
+  if (sel) sel.innerHTML = `<option value="bitcoin">Bitcoin (BTC)</option><option value="ethereum">Ethereum (ETH)</option><option value="tether">Tether (USDT)</option>`;
+  document.getElementById("notifCount").hidden = true;
+  const nm = document.querySelector("#notifModal .modal-head h2"); if (nm) nm.textContent = "Notifications (sample)";
+  document.querySelectorAll(".sidebar-bottom button").forEach(b => { b.disabled = true; b.title = "Community links coming soon"; b.removeAttribute("onclick"); });
+  const form = document.querySelector("#page-support form");
+  if (form) { form.removeAttribute("onsubmit"); form.addEventListener("submit", e => { e.preventDefault(); showToast("Ticket submission isn't available yet — nothing was sent."); }); }
+  const ft = document.querySelector(".footer p"); if (ft) ft.textContent = "© 2026 CoinPulse. Educational demo. Market data supplied by CoinGecko.";
+  const rl = document.getElementById("referralLinkText"); if (rl) rl.textContent = "https://coinpulse.io/ref/CP-9482-USER (example only)";
+  document.querySelectorAll("#page-referral .stat-value").forEach((el, i) => { if (i < 2) el.insertAdjacentText("beforeend", " (example)"); });
+  const lb = document.querySelector("#page-leaderboard .sub"); if (lb) lb.textContent = "Competitor rows are SAMPLE data. Your row = demo cash + open demo positions vs. starting balance plus net demo deposits.";
+  const btn = document.querySelector('.filter-btn[data-filter="defi"]'); if (btn) btn.textContent = "Selected DeFi";
+  const l1 = document.querySelector('.filter-btn[data-filter="layer1"]'); if (l1) l1.textContent = "Selected Layer 1";
+  const hc = document.getElementById("holdingCost"); if (hc) hc.min = "0.00000001";
+}
+
 document.getElementById("coinSearch")?.addEventListener("input", () => {
   if (document.getElementById("page-markets").classList.contains("active")) renderMarkets();
 });
 
+initHonestLabels();
+calculateConversion();
 loadMarkets();
-refreshTimer = setInterval(() => loadMarkets(false), REFRESH_MS);
-</script>
-</body>
-</html>
